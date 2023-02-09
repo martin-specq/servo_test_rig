@@ -11,6 +11,7 @@
 #include "pwm_driver.hh"
 #include "timer_driver.hh"
 #include "servo_motor.h"
+#include "adc_driver.hh"
 #include "math.h"
 
 #define SERVO_CTRL_MIN_PERIOD_S 0.2
@@ -24,6 +25,7 @@ private:
   TimerDriver		*_step_tim_driver;
   PWMDriver		*_pwm_driver;
   ServoMotor		*_servo;
+  ADCDriver		*_voltage_fb_adc;
   float 		 _waveform[SERVO_CTRL_WF_MAX_LEN] 	= {0};
   size_t 		 _waveform_len 				= SERVO_CTRL_WF_MAX_LEN;
   size_t 		 _waveform_idx				= 0;
@@ -31,10 +33,12 @@ private:
 public:
   ServoController(TimerDriver *step_tim_driver,
 		  PWMDriver *pwm_driver,
-		  ServoMotor *servo):
+		  ServoMotor *servo,
+		  ADCDriver *voltage_fb_adc):
 		  _step_tim_driver(step_tim_driver),
 		  _pwm_driver(pwm_driver),
-		  _servo(servo)
+		  _servo(servo),
+		  _voltage_fb_adc(voltage_fb_adc)
   {
   }
 
@@ -109,6 +113,13 @@ public:
   {
     set_angle(_waveform[_waveform_idx]);
     _waveform_idx = (_waveform_idx + 1) % _waveform_len;
+
+
+  }
+
+  float get_voltage_fb(void)
+  {
+    return (_voltage_fb_adc->get_value()) * 3.3 / 4096;
   }
 
   TimerDriver *get_step_tim_driver(void)

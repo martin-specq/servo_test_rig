@@ -17,8 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "pwm_driver.hh"
-#include "timer_driver.hh"
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -26,6 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "servo_controller.hh"
+#include "pwm_driver.hh"
+#include "timer_driver.hh"
+#include "adc_driver.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,11 +55,12 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-ServoMotor 	servo_p500 = {-60.0, 60.0, 900, 2100, 50};
+ServoMotor 	servo_p500 = {-60.0, 60.0, 900, 2100, 200};
 TimerDriver 	tim5(&htim5);
 PWMDriver 	pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
+ADCDriver	adc1_in1(&hadc1);
 
-ServoController servo_ctrl(&tim5, &pwm_tim2_ch2, &servo_p500);
+ServoController servo_ctrl(&tim5, &pwm_tim2_ch2, &servo_p500, &adc1_in1);
 
 /* USER CODE END PV */
 
@@ -120,10 +123,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-    char msg[20] = "Salut\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
