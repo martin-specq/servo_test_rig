@@ -14,6 +14,7 @@ struct ServoMotor
   float 		_angle_max_deg;
   float 		_pulse_width_min_us;
   float 		_pulse_width_max_us;
+  float			_pwm_frequency;
 };
 
 #endif /* DRIVERS_INC_SERVO_MOTOR_H_ */

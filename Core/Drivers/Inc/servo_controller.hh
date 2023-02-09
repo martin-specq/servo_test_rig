@@ -9,6 +9,7 @@
 #define DRIVERS_INC_SERVO_CONTROLLER_HH_
 
 #include "pwm_driver.hh"
+#include "timer_driver.hh"
 #include "servo_motor.h"
 #include "math.h"
 
@@ -20,6 +21,7 @@
 class ServoController
 {
 private:
+  TimerDriver		*_step_tim_driver;
   PWMDriver		*_pwm_driver;
   ServoMotor		*_servo;
   float 		 _waveform[SERVO_CTRL_WF_MAX_LEN] 	= {0};
@@ -27,7 +29,14 @@ private:
   size_t 		 _waveform_idx				= 0;
 
 public:
-  ServoController(PWMDriver *pwm_driver, ServoMotor *servo): _pwm_driver(pwm_driver), _servo(servo){}
+  ServoController(TimerDriver *step_tim_driver,
+		  PWMDriver *pwm_driver,
+		  ServoMotor *servo):
+		  _step_tim_driver(step_tim_driver),
+		  _pwm_driver(pwm_driver),
+		  _servo(servo)
+  {
+  }
 
   void set_angle(float angle)
   {
@@ -36,15 +45,22 @@ public:
 		           (_servo->_pulse_width_max_us - _servo->_pulse_width_min_us) +
 		           _servo->_pulse_width_min_us;
 
-    float duty_cycle = pulse_width_us * _pwm_driver->get_pwm_frequency_hz() / 1000000.0;
+    float duty_cycle = pulse_width_us * _pwm_driver->get_tim_frequency_hz() / 1000000.0;
 
     _pwm_driver->set_duty_cycle(duty_cycle);
   }
 
   void start()
   {
+    _pwm_driver->set_tim_frequency_hz(_servo->_pwm_frequency);
     _pwm_driver->start();
     set_angle(0);
+  }
+
+  void start_waveform()
+  {
+    start();
+    _step_tim_driver->start();
   }
 
   void stop()
@@ -72,7 +88,7 @@ public:
     {
       for(size_t i=0; i<_waveform_len; i++)
       {
-	_waveform[i] = 0.5 * (angle_max_deg - angle_min_deg) * sin(omega * i / LOOP_FREQ_HZ);
+	_waveform[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / LOOP_FREQ_HZ));
       }
     }
     else
@@ -82,10 +98,15 @@ public:
     return 1;
   }
 
-  void update_waveform_pos(void)
+  void step(void)
   {
     set_angle(_waveform[_waveform_idx]);
     _waveform_idx = (_waveform_idx + 1) % _waveform_len;
+  }
+
+  TimerDriver *get_step_tim_driver(void)
+  {
+    return _step_tim_driver;
   }
 };
 

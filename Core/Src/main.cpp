@@ -17,14 +17,14 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include "pwm_driver.hh"
+#include "timer_driver.hh"
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
-
-#include "pwm_driver.hh"
 #include "servo_controller.hh"
 /* USER CODE END Includes */
 
@@ -53,9 +53,11 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-ServoMotor servo_p500 = {-60.0, 60.0, 900, 2100};
-PWMDriver pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
-ServoController servo_ctrl(&pwm_tim2_ch2, &servo_p500);
+ServoMotor 	servo_p500 = {-60.0, 60.0, 900, 2100, 50};
+TimerDriver 	tim5(&htim5);
+PWMDriver 	pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
+
+ServoController servo_ctrl(&tim5, &pwm_tim2_ch2, &servo_p500);
 
 /* USER CODE END PV */
 
@@ -110,8 +112,8 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  servo_ctrl.create_waveform_sinusoidal(-30.0, 30.0, 1.0);
-  servo_ctrl.start();
+  servo_ctrl.create_waveform_sinusoidal(-15.0, 45.0, 10.0);
+  servo_ctrl.start_waveform();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -468,7 +470,10 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-
+  if(htim->Instance == servo_ctrl.get_step_tim_driver()->get_instance())
+  {
+    servo_ctrl.step();
+  }
 }
 /* USER CODE END 4 */
 
