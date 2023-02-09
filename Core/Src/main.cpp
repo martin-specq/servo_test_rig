@@ -112,7 +112,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  servo_ctrl.create_waveform_sinusoidal(-15.0, 45.0, 10.0);
+  servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
   /* USER CODE END 2 */
 

@@ -57,24 +57,31 @@ public:
     set_angle(0);
   }
 
+  void stop()
+  {
+    _pwm_driver->stop();
+  }
+
   void start_waveform()
   {
     start();
     _step_tim_driver->start();
   }
 
-  void stop()
+  void stop_waveform()
   {
-    _pwm_driver->stop();
+    stop();
+    _step_tim_driver->stop();
   }
 
   uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
   {
     float omega;
+    float loop_frequency_hz = _step_tim_driver->get_tim_frequency_hz();
 
     if(period_s >= SERVO_CTRL_MIN_PERIOD_S && period_s <= SERVO_CTRL_MAX_PERIOD_S)
     {
-      _waveform_len = (size_t)(period_s * LOOP_FREQ_HZ);
+      _waveform_len = (size_t)(period_s * loop_frequency_hz);
       omega = 2 * M_PI / period_s;
     }
     else
@@ -88,7 +95,7 @@ public:
     {
       for(size_t i=0; i<_waveform_len; i++)
       {
-	_waveform[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / LOOP_FREQ_HZ));
+	_waveform[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / loop_frequency_hz));
       }
     }
     else
