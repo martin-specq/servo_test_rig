@@ -12,12 +12,20 @@
 #include "timer_driver.hh"
 #include "servo_motor.h"
 #include "adc_driver.hh"
+#include "filter.hh"
 #include "math.h"
 
 #define SERVO_CTRL_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_MAX_PERIOD_S 20.0
-
 #define SERVO_CTRL_WF_MAX_LEN 1000
+
+typedef enum
+{
+  SERVO_CTRL_MODE_DISABLE		= 0x00U,	// Servo control disable
+  SERVO_CTRL_MODE_WAVEFORM            	= 0x01U,    	// Waveform control mode
+  SERVO_CTRL_MODE_MANUAL             	= 0x02U,    	// Manual control mode
+  SERVO_CTRL_MODE_CMD              	= 0x03U,    	// Command control mode
+} ServoCtrlMode_t;
 
 class ServoController
 {
@@ -26,6 +34,8 @@ private:
   PWMDriver		*_pwm_driver;
   ServoMotor		*_servo;
   ADCDriver		*_voltage_fb_adc;
+  ServoCtrlMode_t	_control_mode = SERVO_CTRL_MODE_DISABLE;
+
   float 		 _waveform[SERVO_CTRL_WF_MAX_LEN] 	= {0};
   size_t 		 _waveform_len 				= SERVO_CTRL_WF_MAX_LEN;
   size_t 		 _waveform_idx				= 0;
@@ -58,24 +68,20 @@ public:
   {
     _pwm_driver->set_tim_frequency_hz(_servo->_pwm_frequency);
     _pwm_driver->start();
-    set_angle(0);
+    _step_tim_driver->start();
   }
 
   void stop()
   {
+    _control_mode = SERVO_CTRL_MODE_DISABLE;
     _pwm_driver->stop();
+    _step_tim_driver->stop();
   }
 
   void start_waveform()
   {
+    _control_mode = SERVO_CTRL_MODE_WAVEFORM;
     start();
-    _step_tim_driver->start();
-  }
-
-  void stop_waveform()
-  {
-    stop();
-    _step_tim_driver->stop();
   }
 
   uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
@@ -111,10 +117,19 @@ public:
 
   void step(void)
   {
-    set_angle(_waveform[_waveform_idx]);
-    _waveform_idx = (_waveform_idx + 1) % _waveform_len;
+    if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
+    {
+      set_angle(_waveform[_waveform_idx]);
+      _waveform_idx = (_waveform_idx + 1) % _waveform_len;
+    }
+    else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
+    {
 
+    }
+    else if(_control_mode == SERVO_CTRL_MODE_CMD)
+    {
 
+    }
   }
 
   float get_voltage_fb(void)

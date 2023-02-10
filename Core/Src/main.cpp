@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -28,6 +27,7 @@
 #include "pwm_driver.hh"
 #include "timer_driver.hh"
 #include "adc_driver.hh"
+#include "filter.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+DAC_HandleTypeDef hdac1;
+
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
@@ -55,12 +57,14 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-ServoMotor 	servo_p500 = {-60.0, 60.0, 900, 2100, 200};
+ServoMotor 	servo_p500 = {-60.0, 60.0, 900.0, 2100.0, 50.0};
 TimerDriver 	tim5(&htim5);
 PWMDriver 	pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
 ADCDriver	adc1_in1(&hadc1);
 
 ServoController servo_ctrl(&tim5, &pwm_tim2_ch2, &servo_p500, &adc1_in1);
+
+Filter<float, 16> filter;
 
 /* USER CODE END PV */
 
@@ -72,6 +76,7 @@ static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_DAC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -114,15 +119,25 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
+  MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
   servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
+  //servo_ctrl.start();
+  //servo_ctrl.set_angle(60);
+  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /**char msg[10];
+    sprintf(msg, "%.2f\r\n", servo_ctrl.get_voltage_fb());
+    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
+    filter.update((uint32_t)(servo_ctrl.get_voltage_fb() / 3.3 * 4096));
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, filter.mean_filter());
+    HAL_Delay(20);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -243,6 +258,49 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief DAC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DAC1_Init(void)
+{
+
+  /* USER CODE BEGIN DAC1_Init 0 */
+
+  /* USER CODE END DAC1_Init 0 */
+
+  DAC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN DAC1_Init 1 */
+
+  /* USER CODE END DAC1_Init 1 */
+
+  /** DAC Initialization
+  */
+  hdac1.Instance = DAC1;
+  if (HAL_DAC_Init(&hdac1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** DAC channel OUT1 config
+  */
+  sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_ENABLE;
+  sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
+  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DAC1_Init 2 */
+
+  /* USER CODE END DAC1_Init 2 */
 
 }
 

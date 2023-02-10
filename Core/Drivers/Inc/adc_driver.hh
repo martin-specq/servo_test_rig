@@ -23,8 +23,14 @@ public:
   uint16_t get_value(void)
   {
     HAL_ADC_Start(_hadcx);
-    HAL_ADC_PollForConversion(_hadcx, ADC_DRIVER_MAX_CONV_DELAY_MS);
-    return HAL_ADC_GetValue(_hadcx);
+    if(HAL_ADC_PollForConversion(_hadcx, ADC_DRIVER_MAX_CONV_DELAY_MS) == HAL_OK)
+    {
+      return HAL_ADC_GetValue(_hadcx);
+    }
+    else
+    {
+      return 4096;
+    }
   }
 };
 
