@@ -19,6 +19,13 @@
 #define SERVO_CTRL_MAX_PERIOD_S 20.0
 #define SERVO_CTRL_WF_MAX_LEN 1000
 
+typedef struct
+{
+  float 		values[SERVO_CTRL_WF_MAX_LEN] 			= {0};
+  size_t 		len 						= SERVO_CTRL_WF_MAX_LEN;
+  size_t 		head						= 0;
+} Waveform_t;
+
 typedef enum
 {
   SERVO_CTRL_MODE_DISABLE		= 0x00U,	// Servo control disable
@@ -32,18 +39,16 @@ class ServoController
 private:
   TimerDriver		*_step_tim_driver;
   PWMDriver		*_pwm_driver;
-  ServoMotor		*_servo;
+  ServoMotor_t		*_servo;
   ADCDriver		*_voltage_fb_adc;
+  Filter<uint16_t,16>	_voltage_fb_filter;
   ServoCtrlMode_t	_control_mode = SERVO_CTRL_MODE_DISABLE;
-
-  float 		 _waveform[SERVO_CTRL_WF_MAX_LEN] 	= {0};
-  size_t 		 _waveform_len 				= SERVO_CTRL_WF_MAX_LEN;
-  size_t 		 _waveform_idx				= 0;
+  Waveform_t		_waveform;
 
 public:
   ServoController(TimerDriver *step_tim_driver,
 		  PWMDriver *pwm_driver,
-		  ServoMotor *servo,
+		  ServoMotor_t *servo,
 		  ADCDriver *voltage_fb_adc):
 		  _step_tim_driver(step_tim_driver),
 		  _pwm_driver(pwm_driver),
@@ -91,7 +96,7 @@ public:
 
     if(period_s >= SERVO_CTRL_MIN_PERIOD_S && period_s <= SERVO_CTRL_MAX_PERIOD_S)
     {
-      _waveform_len = (size_t)(period_s * loop_frequency_hz);
+      _waveform.len = (size_t)(period_s * loop_frequency_hz);
       omega = 2 * M_PI / period_s;
     }
     else
@@ -103,9 +108,9 @@ public:
        angle_max_deg <= _servo->_angle_max_deg &&
        angle_min_deg < angle_max_deg)
     {
-      for(size_t i=0; i<_waveform_len; i++)
+      for(size_t i=0; i<_waveform.len; i++)
       {
-	_waveform[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / loop_frequency_hz));
+	_waveform.values[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / loop_frequency_hz));
       }
     }
     else
@@ -119,8 +124,8 @@ public:
   {
     if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
     {
-      set_angle(_waveform[_waveform_idx]);
-      _waveform_idx = (_waveform_idx + 1) % _waveform_len;
+      set_angle(_waveform.values[_waveform.head]);
+      _waveform.head = (_waveform.head + 1) % _waveform.len;
     }
     else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
     {

@@ -27,7 +27,6 @@
 #include "pwm_driver.hh"
 #include "timer_driver.hh"
 #include "adc_driver.hh"
-#include "filter.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,14 +56,11 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-ServoMotor 	servo_p500 = {-60.0, 60.0, 900.0, 2100.0, 50.0};
+ServoMotor_t 	servo_p500 = {-60.0, 60.0, 900.0, 2100.0, 50.0};
 TimerDriver 	tim5(&htim5);
 PWMDriver 	pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
 ADCDriver	adc1_in1(&hadc1);
-
 ServoController servo_ctrl(&tim5, &pwm_tim2_ch2, &servo_p500, &adc1_in1);
-
-Filter<float, 16> filter;
 
 /* USER CODE END PV */
 
@@ -134,10 +130,10 @@ int main(void)
   {
     /**char msg[10];
     sprintf(msg, "%.2f\r\n", servo_ctrl.get_voltage_fb());
-    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
+    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
     filter.update((uint32_t)(servo_ctrl.get_voltage_fb() / 3.3 * 4096));
     HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, filter.mean_filter());
-    HAL_Delay(20);
+    HAL_Delay(20);*/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
