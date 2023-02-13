@@ -77,7 +77,7 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define MAX_UINT32_T 4294967296
+#define MAX_UINT32_T 0xFFFFFFFF
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

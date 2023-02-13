@@ -15,9 +15,12 @@
 #include "filter.hh"
 #include "math.h"
 
-#define SERVO_CTRL_MIN_PERIOD_S 0.2
-#define SERVO_CTRL_MAX_PERIOD_S 20.0
+
+#define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
+#define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
 #define SERVO_CTRL_WF_MAX_LEN 1000
+
+#define SERVO_CTRL_NB_ADC_MEAS 4
 
 typedef struct
 {
@@ -25,6 +28,16 @@ typedef struct
   size_t 		len 						= SERVO_CTRL_WF_MAX_LEN;
   size_t 		head						= 0;
 } Waveform_t;
+
+typedef struct
+{
+  float torque_nm;
+  float angle_deg;
+  float angular_rate_radps;
+  float supply_current_a;
+  float supply_voltage_v;
+  float temperature_degc;
+} ServoCtrlState_t;
 
 typedef enum
 {
@@ -34,26 +47,37 @@ typedef enum
   SERVO_CTRL_MODE_CMD              	= 0x03U,    	// Command control mode
 } ServoCtrlMode_t;
 
+typedef enum
+{
+  SERVO_CTRL_ADC_CH_MAG_FB		= 0x00U,	// Magnetic position feedback
+  SERVO_CTRL_ADC_CH_POT_FB            	= 0x01U,    	// Potentiometer position feedback
+  SERVO_CTRL_ADC_CH_CUR_FB             	= 0x02U,    	// Current feedback
+  SERVO_CTRL_ADC_CH_POT_CMD           	= 0x03U,    	// Potentiometer position command
+} ServoCtrlAdcChType_t;
+
 class ServoController
 {
 private:
-  TimerDriver		*_step_tim_driver;
-  PWMDriver		*_pwm_driver;
-  ServoMotor_t		*_servo;
-  ADCDriver		*_voltage_fb_adc;
-  Filter<uint16_t,16>	_voltage_fb_filter;
-  ServoCtrlMode_t	_control_mode = SERVO_CTRL_MODE_DISABLE;
-  Waveform_t		_waveform;
+  TimerDriver					*_loop_timer;
+  PWMDriver					*_pwm_timer;
+  ServoMotor_t					*_servo;
+  ADCDriver					*_fb_adc;
+  Filter<uint16_t,16>				_voltage_fb_filter;
+  ServoCtrlMode_t				_control_mode = SERVO_CTRL_MODE_DISABLE;
+  Waveform_t					_waveform;
+  ServoCtrlState_t				_state;
+
+  uint16_t 					_fb_adc_buf[SERVO_CTRL_NB_ADC_MEAS];
 
 public:
-  ServoController(TimerDriver *step_tim_driver,
-		  PWMDriver *pwm_driver,
+  ServoController(TimerDriver *loop_timer,
+		  PWMDriver *pwm_timer,
 		  ServoMotor_t *servo,
-		  ADCDriver *voltage_fb_adc):
-		  _step_tim_driver(step_tim_driver),
-		  _pwm_driver(pwm_driver),
+		  ADCDriver *fb_adc):
+		  _loop_timer(loop_timer),
+		  _pwm_timer(pwm_timer),
 		  _servo(servo),
-		  _voltage_fb_adc(voltage_fb_adc)
+		  _fb_adc(fb_adc)
   {
   }
 
@@ -64,23 +88,23 @@ public:
 		           (_servo->_pulse_width_max_us - _servo->_pulse_width_min_us) +
 		           _servo->_pulse_width_min_us;
 
-    float duty_cycle = pulse_width_us * _pwm_driver->get_tim_frequency_hz() / 1000000.0;
+    float duty_cycle = pulse_width_us * _pwm_timer->get_tim_frequency_hz() / 1000000.0;
 
-    _pwm_driver->set_duty_cycle(duty_cycle);
+    _pwm_timer->set_duty_cycle(duty_cycle);
   }
 
   void start()
   {
-    _pwm_driver->set_tim_frequency_hz(_servo->_pwm_frequency);
-    _pwm_driver->start();
-    _step_tim_driver->start();
+    _pwm_timer->set_tim_frequency_hz(_servo->_pwm_frequency);
+    _pwm_timer->start();
+    _loop_timer->start();
   }
 
   void stop()
   {
     _control_mode = SERVO_CTRL_MODE_DISABLE;
-    _pwm_driver->stop();
-    _step_tim_driver->stop();
+    _pwm_timer->stop();
+    _loop_timer->stop();
   }
 
   void start_waveform()
@@ -92,9 +116,9 @@ public:
   uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
   {
     float omega;
-    float loop_frequency_hz = _step_tim_driver->get_tim_frequency_hz();
+    float loop_frequency_hz = _loop_timer->get_tim_frequency_hz();
 
-    if(period_s >= SERVO_CTRL_MIN_PERIOD_S && period_s <= SERVO_CTRL_MAX_PERIOD_S)
+    if(period_s >= SERVO_CTRL_WF_MIN_PERIOD_S && period_s <= SERVO_CTRL_WF_MAX_PERIOD_S)
     {
       _waveform.len = (size_t)(period_s * loop_frequency_hz);
       omega = 2 * M_PI / period_s;
@@ -135,16 +159,19 @@ public:
     {
 
     }
+
+    // Trigger new measurement
+    _fb_adc->start_conversion((uint32_t *)_fb_adc_buf, SERVO_CTRL_NB_ADC_MEAS);
   }
 
-  float get_voltage_fb(void)
+  void update_state(void)
   {
-    return (_voltage_fb_adc->get_value()) * 3.3 / 4096;
+
   }
 
-  TimerDriver *get_step_tim_driver(void)
+  TimerDriver *get_loop_timer(void)
   {
-    return _step_tim_driver;
+    return _loop_timer;
   }
 };
 

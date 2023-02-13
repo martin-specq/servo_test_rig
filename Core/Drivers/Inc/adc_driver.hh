@@ -10,27 +10,34 @@
 
 #include "main.h"
 
-#define ADC_DRIVER_MAX_CONV_DELAY_MS	2
-
 class ADCDriver
 {
 private:
   ADC_HandleTypeDef    		*_hadcx;
+  uint8_t 			_conversion_complete = 0;
 
 public:
   ADCDriver(ADC_HandleTypeDef *hadcx) : _hadcx(hadcx){}
 
-  uint16_t get_value(void)
+  void start_conversion(uint32_t *buf, size_t len)
   {
-    HAL_ADC_Start(_hadcx);
-    if(HAL_ADC_PollForConversion(_hadcx, ADC_DRIVER_MAX_CONV_DELAY_MS) == HAL_OK)
-    {
-      return HAL_ADC_GetValue(_hadcx);
-    }
-    else
-    {
-      return 4096;
-    }
+    _conversion_complete = 0;
+    HAL_ADC_Start_DMA(_hadcx, buf, len);
+  }
+
+  void on_complete_conversion(void)
+  {
+    _conversion_complete = 1;
+  }
+
+  uint8_t is_conversion_complete(void)
+  {
+    return _conversion_complete;
+  }
+
+  ADC_TypeDef *get_instance(void)
+  {
+    return _hadcx->Instance;
   }
 };
 
