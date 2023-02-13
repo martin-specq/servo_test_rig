@@ -59,7 +59,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define TIM_CLK_FREQ_HZ 80000000
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
 #define USART_TX_Pin GPIO_PIN_2
@@ -74,7 +73,12 @@ void Error_Handler(void);
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define HX711_DATA_Pin GPIO_PIN_8
+#define HX711_DATA_GPIO_Port GPIOB
+#define HX711_CLK_Pin GPIO_PIN_9
+#define HX711_CLK_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#define TIM_CLK_FREQ_HZ 80000000
 #define MAX_UINT16_T 0x0000FFFF
 #define MAX_UINT32_T 0xFFFFFFFF
 /* USER CODE END Private defines */

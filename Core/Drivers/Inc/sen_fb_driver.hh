@@ -12,13 +12,14 @@
 #include "adc_driver.hh"
 #include "current_amplifier_ina180.hh"
 
-#define SEN_FB_ADC_NB_CH 3
+#define SEN_FB_ADC_NB_CH 4
 
 typedef enum
 {
   SEN_FB_ADC_CH_MAG	     = 0x00U,		// Magnetic position feedback
   SEN_FB_ADC_CH_POT          = 0x01U,    	// Potentiometer position feedback
   SEN_FB_ADC_CH_CUR          = 0x02U,    	// Current feedback
+  SEN_FB_ADC_CH_VOL          = 0x03U    	// Voltage feedback
 } SenFbAdcChType_t;
 
 typedef struct
@@ -43,6 +44,9 @@ public:
 
   void update(void)
   {
+    // Read load cell
+    uint32_t load_cell_adc_val;
+    _load_cell->read(&load_cell_adc_val);
     _adc->start_conversion((uint32_t *)_adc_buf, SEN_FB_ADC_NB_CH);
   }
 
