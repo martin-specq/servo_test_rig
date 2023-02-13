@@ -13,6 +13,7 @@
 #include "sen_fb_driver.hh"
 #include "math.h"
 
+const uint32_t SERVO_CTRL_LOOP_FREQ_HZ = 50;
 
 #define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
