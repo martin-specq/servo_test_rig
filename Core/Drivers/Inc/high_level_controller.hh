@@ -5,14 +5,12 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_SERVO_CONTROLLER_HH_
-#define DRIVERS_INC_SERVO_CONTROLLER_HH_
+#ifndef DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
+#define DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 
-#include "pwm_driver.hh"
 #include "timer_driver.hh"
-#include "servo_motor.h"
-#include "adc_driver.hh"
-#include "filter.hh"
+#include "servo_p500_driver.hh"
+#include "sen_fb_driver.hh"
 #include "math.h"
 
 
@@ -20,24 +18,12 @@
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
 #define SERVO_CTRL_WF_MAX_LEN 1000
 
-#define SERVO_CTRL_NB_ADC_MEAS 4
-
 typedef struct
 {
   float 		values[SERVO_CTRL_WF_MAX_LEN] 			= {0};
   size_t 		len 						= SERVO_CTRL_WF_MAX_LEN;
   size_t 		head						= 0;
 } Waveform_t;
-
-typedef struct
-{
-  float torque_nm;
-  float angle_deg;
-  float angular_rate_radps;
-  float supply_current_a;
-  float supply_voltage_v;
-  float temperature_degc;
-} ServoCtrlState_t;
 
 typedef enum
 {
@@ -47,63 +33,35 @@ typedef enum
   SERVO_CTRL_MODE_CMD              	= 0x03U,    	// Command control mode
 } ServoCtrlMode_t;
 
-typedef enum
-{
-  SERVO_CTRL_ADC_CH_MAG_FB		= 0x00U,	// Magnetic position feedback
-  SERVO_CTRL_ADC_CH_POT_FB            	= 0x01U,    	// Potentiometer position feedback
-  SERVO_CTRL_ADC_CH_CUR_FB             	= 0x02U,    	// Current feedback
-  SERVO_CTRL_ADC_CH_POT_CMD           	= 0x03U,    	// Potentiometer position command
-} ServoCtrlAdcChType_t;
+
 
 class ServoController
 {
 private:
   TimerDriver					*_loop_timer;
-  PWMDriver					*_pwm_timer;
-  ServoMotor_t					*_servo;
-  ADCDriver					*_fb_adc;
-  Filter<uint16_t,16>				_voltage_fb_filter;
+  ServoP500Driver				*_servo;
+  SenFbDriver					*_sensors;
   ServoCtrlMode_t				_control_mode = SERVO_CTRL_MODE_DISABLE;
   Waveform_t					_waveform;
-  ServoCtrlState_t				_state;
-
-  uint16_t 					_fb_adc_buf[SERVO_CTRL_NB_ADC_MEAS];
 
 public:
   ServoController(TimerDriver *loop_timer,
-		  PWMDriver *pwm_timer,
-		  ServoMotor_t *servo,
-		  ADCDriver *fb_adc):
+		  ServoP500Driver *servo,
+		  SenFbDriver *sensors):
 		  _loop_timer(loop_timer),
-		  _pwm_timer(pwm_timer),
 		  _servo(servo),
-		  _fb_adc(fb_adc)
+		  _sensors(sensors)
   {
-  }
-
-  void set_angle(float angle)
-  {
-    float pulse_width_us = (angle - _servo->_angle_min_deg) /
-	                   (_servo->_angle_max_deg - _servo->_angle_min_deg) *
-		           (_servo->_pulse_width_max_us - _servo->_pulse_width_min_us) +
-		           _servo->_pulse_width_min_us;
-
-    float duty_cycle = pulse_width_us * _pwm_timer->get_tim_frequency_hz() / 1000000.0;
-
-    _pwm_timer->set_duty_cycle(duty_cycle);
   }
 
   void start()
   {
-    _pwm_timer->set_tim_frequency_hz(_servo->_pwm_frequency);
-    _pwm_timer->start();
     _loop_timer->start();
   }
 
   void stop()
   {
     _control_mode = SERVO_CTRL_MODE_DISABLE;
-    _pwm_timer->stop();
     _loop_timer->stop();
   }
 
@@ -128,8 +86,8 @@ public:
       return 0;
     }
 
-    if(angle_min_deg >= _servo->_angle_min_deg &&
-       angle_max_deg <= _servo->_angle_max_deg &&
+    if(angle_min_deg >= P500_ANGLE_MIN_DEG &&
+       angle_max_deg <= P500_ANGLE_MAX_DEG &&
        angle_min_deg < angle_max_deg)
     {
       for(size_t i=0; i<_waveform.len; i++)
@@ -146,9 +104,10 @@ public:
 
   void step(void)
   {
+    _sensors->update();
     if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
     {
-      set_angle(_waveform.values[_waveform.head]);
+      _servo->set_angle(_waveform.values[_waveform.head]);
       _waveform.head = (_waveform.head + 1) % _waveform.len;
     }
     else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
@@ -160,13 +119,6 @@ public:
 
     }
 
-    // Trigger new measurement
-    _fb_adc->start_conversion((uint32_t *)_fb_adc_buf, SERVO_CTRL_NB_ADC_MEAS);
-  }
-
-  void update_state(void)
-  {
-
   }
 
   TimerDriver *get_loop_timer(void)
@@ -176,4 +128,4 @@ public:
 };
 
 
-#endif /* DRIVERS_INC_SERVO_CONTROLLER_HH_ */
+#endif /* DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_ */
