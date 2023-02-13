@@ -10,6 +10,8 @@
 
 #include "main.h"
 
+const float ADC_COUNTS_TO_VOLTS = 8.056640625e-4;
+
 class ADCDriver
 {
 private:
