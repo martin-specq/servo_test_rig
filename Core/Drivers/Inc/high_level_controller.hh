@@ -8,7 +8,6 @@
 #ifndef DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 #define DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 
-#include "timer_driver.hh"
 #include "servo_p500_driver.hh"
 #include "sen_fb_driver.hh"
 #include "math.h"
@@ -39,14 +38,14 @@ typedef enum
 class ServoController
 {
 private:
-  TimerDriver					*_loop_timer;
+  TIM_HandleTypeDef				*_loop_timer;
   ServoP500Driver				*_servo;
   SenFbDriver					*_sensors;
   ServoCtrlMode_t				_control_mode = SERVO_CTRL_MODE_DISABLE;
   Waveform_t					_waveform;
 
 public:
-  ServoController(TimerDriver *loop_timer,
+  ServoController(TIM_HandleTypeDef *loop_timer,
 		  ServoP500Driver *servo,
 		  SenFbDriver *sensors):
 		  _loop_timer(loop_timer),
@@ -57,13 +56,13 @@ public:
 
   void start()
   {
-    _loop_timer->start();
+    HAL_TIM_Base_Start_IT(_loop_timer);
   }
 
   void stop()
   {
     _control_mode = SERVO_CTRL_MODE_DISABLE;
-    _loop_timer->stop();
+    HAL_TIM_Base_Stop_IT(_loop_timer);
   }
 
   void start_waveform()
@@ -75,7 +74,7 @@ public:
   uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
   {
     float omega;
-    float loop_frequency_hz = _loop_timer->get_tim_frequency_hz();
+    float loop_frequency_hz = (float)TIM_CLK_FREQ_HZ / __HAL_TIM_GET_AUTORELOAD(_loop_timer);
 
     if(period_s >= SERVO_CTRL_WF_MIN_PERIOD_S && period_s <= SERVO_CTRL_WF_MAX_PERIOD_S)
     {
@@ -122,7 +121,7 @@ public:
 
   }
 
-  TimerDriver *get_loop_timer(void)
+  TIM_HandleTypeDef *get_loop_timer(void)
   {
     return _loop_timer;
   }

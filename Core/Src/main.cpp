@@ -23,9 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
-#include "pwm_driver.hh"
-#include "timer_driver.hh"
-#include "adc_driver.hh"
 
 #include "servo_p500_driver.hh"
 #include "sen_fb_driver.hh"
@@ -63,17 +60,14 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 // Servo driver
-PWMDriver pwm_tim2_ch2(&htim2, TIM_CHANNEL_2);
-ServoP500Driver servo(&pwm_tim2_ch2);
+ServoP500Driver servo(&htim2, TIM_CHANNEL_2);
 
 // Sensor feedback
-ADCDriver adc1(&hadc1);
 HX711Driver load_cell(&htim1, HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
-SenFbDriver sensors(&adc1, &load_cell);
+SenFbDriver sensors(&hadc1, &load_cell);
 
 // High level controller
-TimerDriver tim5(&htim5);
-ServoController servo_ctrl(&tim5, &servo, &sensors);
+ServoController servo_ctrl(&htim5, &servo, &sensors);
 
 /* USER CODE END PV */
 
@@ -596,7 +590,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  if(htim->Instance == servo_ctrl.get_loop_timer()->get_instance())
+  if(htim->Instance == servo_ctrl.get_loop_timer()->Instance)
   {
     servo_ctrl.step();
   }
@@ -604,9 +598,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-  if(hadc->Instance == adc1.get_instance())
+  if(hadc->Instance == sensors.get_adc_instance())
   {
-    adc1.on_complete_conversion();
+    sensors.on_adc_cplt_conv();
   }
 }
 /* USER CODE END 4 */

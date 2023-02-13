@@ -8,7 +8,7 @@
 #ifndef DRIVERS_INC_SERVO_P500_DRIVER_HH_
 #define DRIVERS_INC_SERVO_P500_DRIVER_HH_
 
-#include "pwm_driver.hh"
+#include "main.h"
 
 #define P500_ANGLE_MIN_DEG 		-60.0
 #define P500_ANGLE_MAX_DEG 		60.0
@@ -19,10 +19,11 @@
 class ServoP500Driver
 {
 private:
-  PWMDriver	*_pwm_timer;
+  TIM_HandleTypeDef	*_htimx;
+  uint32_t		_timx_channel;
 
 public:
-  ServoP500Driver(PWMDriver *pwm_timer) : _pwm_timer(pwm_timer) {}
+  ServoP500Driver(TIM_HandleTypeDef *_htimx, uint32_t tim_channel) : _htimx(_htimx), _timx_channel(tim_channel) {}
 
   void set_angle(float angle_deg)
   {
@@ -31,20 +32,22 @@ public:
 		           (P500_PULSE_WIDTH_MAX_US - P500_PULSE_WIDTH_MIN_US) +
 			   P500_PULSE_WIDTH_MIN_US;
 
-    float duty_cycle = pulse_width_us * _pwm_timer->get_tim_frequency_hz() / 1000000.0;
+    float duty_cycle = pulse_width_us * TIM_CLK_FREQ_HZ / 1000000.0;
 
-    _pwm_timer->set_duty_cycle(duty_cycle);
+    if(duty_cycle >= 0 && duty_cycle <= 1)
+    {
+      __HAL_TIM_SET_COMPARE(_htimx, _timx_channel, (uint32_t)(duty_cycle * __HAL_TIM_GET_AUTORELOAD(_htimx)));
+    }
   }
 
   void start()
   {
-    _pwm_timer->set_tim_frequency_hz(P500_PWM_FREQUENCY_HZ);
-    _pwm_timer->start();
+    HAL_TIM_PWM_Start(_htimx, _timx_channel);
   }
 
   void stop()
   {
-    _pwm_timer->stop();
+    HAL_TIM_PWM_Stop(_htimx, _timx_channel);
   }
 };
 
