@@ -33,10 +33,16 @@ typedef struct
 class SenFbDriver
 {
 private:
+
+  // ADC
   uint16_t 			_adc_buf[SEN_FB_ADC_NB_CH];
   ADC_HandleTypeDef    		*_hadcx;
   uint8_t 			_adcx_conv_cplt = 0;
+
+  // Load cell
   HX711Driver			*_load_cell;
+
+  // State
   SensorState_t			_state;
 
 public:
