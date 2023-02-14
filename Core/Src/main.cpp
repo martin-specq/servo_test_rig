@@ -134,8 +134,9 @@ int main(void)
 
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
-  servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
-  servo_ctrl.start_waveform();
+  servo_ctrl.create_waveform_trapezoidal(-60, 60, 2, 0.5);
+  //servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
+  //servo_ctrl.start_waveform();
   //servo_ctrl.start();
   //servo_ctrl.set_angle(60);
   HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);

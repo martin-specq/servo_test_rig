@@ -27,13 +27,11 @@ typedef struct
 
 typedef enum
 {
-  SERVO_CTRL_MODE_DISABLE		= 0x00U,	// Servo control disable
-  SERVO_CTRL_MODE_WAVEFORM            	= 0x01U,    	// Waveform control mode
-  SERVO_CTRL_MODE_MANUAL             	= 0x02U,    	// Manual control mode
-  SERVO_CTRL_MODE_CMD              	= 0x03U,    	// Command control mode
+	SERVO_CTRL_MODE_DISABLE = 0x00U,	// Servo control disable
+	SERVO_CTRL_MODE_WAVEFORM = 0x01U,    	// Waveform control mode
+	SERVO_CTRL_MODE_MANUAL = 0x02U,    	// Manual control mode
+	SERVO_CTRL_MODE_CMD = 0x03U,    	// Command control mode
 } ServoCtrlMode_t;
-
-
 
 class ServoController
 {
@@ -102,30 +100,78 @@ public:
     return 1;
   }
 
-  void step(void)
-  {
-    _sensors->update();
-    if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
-    {
-      _servo->set_angle(_waveform.values[_waveform.head]);
-      _waveform.head = (_waveform.head + 1) % _waveform.len;
-    }
-    else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
-    {
+	uint8_t create_waveform_trapezoidal(float angle_min_deg, float angle_max_deg, float period_s, float plateau_time_s)
+	{
+		float loop_frequency_hz = (float)TIM_CLK_FREQ_HZ / __HAL_TIM_GET_AUTORELOAD(_loop_timer);
 
-    }
-    else if(_control_mode == SERVO_CTRL_MODE_CMD)
-    {
+		// Check time parameters
+		if(period_s < SERVO_CTRL_WF_MIN_PERIOD_S ||
+			 period_s > SERVO_CTRL_WF_MAX_PERIOD_S ||
+			 2 * plateau_time_s > period_s)
+		{
+			return 0;
+		}
 
-    }
+		// Check angle parameters
+		if(angle_min_deg < P500_ANGLE_MIN_DEG ||
+			 angle_max_deg > P500_ANGLE_MAX_DEG ||
+			 angle_min_deg >= angle_max_deg)
+		{
+			return 0;
+		}
 
-  }
+		_waveform.len = (size_t)(period_s * loop_frequency_hz);
 
-  TIM_TypeDef *get_loop_timer_instance(void)
-  {
-    return _loop_timer->Instance;
-  }
+		size_t i1 = (size_t)(plateau_time_s * loop_frequency_hz);
+		size_t i2 = i1 + (size_t)((period_s / 2 - plateau_time_s) * loop_frequency_hz);
+		size_t i3 = i2 + i1;
+		_waveform.len = i3 + i2 - i1;
+
+		for(size_t i = 0; i < i1; i++)
+		{
+			_waveform.values[i] = angle_min_deg;
+		}
+		for(size_t i = i1; i < i2; i++)
+		{
+			_waveform.values[i] = angle_min_deg + (angle_max_deg - angle_min_deg) / (i2 - i1) * (i - i1);
+		}
+		for(size_t i = i2; i < i3; i++)
+		{
+			_waveform.values[i] = angle_max_deg;
+		}
+		for(size_t i = i3; i < _waveform.len; i++)
+		{
+			_waveform.values[i] = angle_max_deg - (angle_max_deg - angle_min_deg) / (_waveform.len - i3) * (i - i3);
+		}
+
+		return 1;
+	}
+
+
+
+	void step(void)
+	{
+		_sensors->update();
+		if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
+		{
+			_servo->set_angle(_waveform.values[_waveform.head]);
+			_waveform.head = (_waveform.head + 1) % _waveform.len;
+		}
+		else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
+		{
+
+		}
+		else if(_control_mode == SERVO_CTRL_MODE_CMD)
+		{
+
+		}
+
+	}
+
+	TIM_TypeDef* get_loop_timer_instance(void)
+	{
+		return _loop_timer->Instance;
+	}
 };
-
 
 #endif /* DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_ */
