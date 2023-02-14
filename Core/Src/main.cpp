@@ -24,10 +24,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "servo_p500_driver.hh"
-#include "sen_fb_driver.hh"
+#include "waiter_us.h"
+#include "one_wire_driver.hh"
+#include "ds18b20_driver.hh"
 #include "high_level_controller.hh"
 #include "hx711_driver.hh"
+#include "sen_fb_driver.hh"
+#include "servo_p500_driver.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,7 +66,9 @@ UART_HandleTypeDef huart2;
 ServoP500Driver servo(&htim2, TIM_CHANNEL_2);
 
 // Sensor feedback
-HX711Driver load_cell(&htim1, HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
+OneWireDriver ds18b20_1wire(DS18B20_GPIO_Port, DS18B20_Pin);
+DS18B20Driver temp_sensor(&ds18b20_1wire);
+HX711Driver load_cell(HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
 SenFbDriver sensors(&hadc1, &load_cell);
 
 // High level controller
@@ -126,6 +131,7 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  waiter_us_init(&htim1);
   servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
   //servo_ctrl.start();
@@ -404,7 +410,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = TIM_CLK_FREQ_HZ / P500_PWM_FREQUENCY_HZ - 1;
+  htim2.Init.Period = 1600000-1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
@@ -453,7 +459,7 @@ static void MX_TIM5_Init(void)
   htim5.Instance = TIM5;
   htim5.Init.Prescaler = 0;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = TIM_CLK_FREQ_HZ / SERVO_CTRL_LOOP_FREQ_HZ - 1;
+  htim5.Init.Period = 1600000-1;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
@@ -544,10 +550,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(DS18B20_GPIO_Port, DS18B20_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(HX711_CLK_GPIO_Port, HX711_CLK_Pin, GPIO_PIN_RESET);
@@ -558,19 +564,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DS18B20_Pin */
+  GPIO_InitStruct.Pin = DS18B20_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(DS18B20_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : HX711_DATA_Pin */
   GPIO_InitStruct.Pin = HX711_DATA_Pin;
@@ -590,9 +596,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  if(htim->Instance == servo_ctrl.get_loop_timer()->Instance)
+  if(htim->Instance == servo_ctrl.get_loop_timer_instance())
   {
     servo_ctrl.step();
+    /**char msg[20] = "coucou loop\r\n";
+    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
   }
 }
 
@@ -601,6 +609,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   if(hadc->Instance == sensors.get_adc_instance())
   {
     sensors.on_adc_cplt_conv();
+    /**char msg[20] = "coucou adc\r\n";
+		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
   }
 }
 /* USER CODE END 4 */

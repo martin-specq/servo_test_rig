@@ -8,8 +8,9 @@
 #ifndef DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 #define DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 
-#include "servo_p500_driver.hh"
 #include "sen_fb_driver.hh"
+
+#include "servo_p500_driver.hh"
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
@@ -121,9 +122,9 @@ public:
 
   }
 
-  TIM_HandleTypeDef *get_loop_timer(void)
+  TIM_TypeDef *get_loop_timer_instance(void)
   {
-    return _loop_timer;
+    return _loop_timer->Instance;
   }
 };
 
