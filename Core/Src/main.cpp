@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "waiter_us.h"
 #include "one_wire_driver.hh"
 #include "ds18b20_driver.hh"
 #include "high_level_controller.hh"
@@ -67,9 +66,9 @@ ServoP500Driver servo(&htim2, TIM_CHANNEL_2);
 
 // Sensor feedback
 OneWireDriver ds18b20_1wire(DS18B20_GPIO_Port, DS18B20_Pin);
-DS18B20Driver temp_sensor(&ds18b20_1wire);
+DS18B20Driver temp_sensors(&ds18b20_1wire);
 HX711Driver load_cell(HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
-SenFbDriver sensors(&hadc1, &load_cell);
+SenFbDriver sensors(&hadc1, &load_cell, &temp_sensors);
 
 // High level controller
 ServoController servo_ctrl(&htim5, &servo, &sensors);
@@ -131,7 +130,7 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  waiter_us_init(&htim1);
+  HAL_TIM_Base_Start(&htim1);
   servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
   //servo_ctrl.start();
@@ -599,8 +598,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if(htim->Instance == servo_ctrl.get_loop_timer_instance())
   {
     servo_ctrl.step();
-    /**char msg[20] = "coucou loop\r\n";
-    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
+    char msg[20];
+    sprintf(msg, "%.2f\r\n", sensors._state.temperature_degc);
+    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
   }
 }
 
@@ -612,6 +612,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     /**char msg[20] = "coucou adc\r\n";
 		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
   }
+}
+
+void delay_us(uint32_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim1, 0);
+	while(__HAL_TIM_GET_COUNTER(&htim1) < us);
 }
 /* USER CODE END 4 */
 

@@ -323,7 +323,7 @@ void OneWireDriver::find_devices()
 			{
 				memcpy(&_found_roms[m++], _rom_no, sizeof(_rom_no)); // Identifies ROM and records them
 				_num_roms++;
-			} while (next() && (_num_roms < SENSORS_MAX));
+			} while (next() && (_num_roms < ONE_WIRE_SENSORS_MAX));
 			// Continues until no additional devices are found or the upper limit is reached
 		}
 	}

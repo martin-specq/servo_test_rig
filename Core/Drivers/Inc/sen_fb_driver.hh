@@ -15,10 +15,10 @@
 
 typedef enum
 {
-  SEN_FB_ADC_CH_MAG	     = 0x00U,		// Magnetic position feedback
-  SEN_FB_ADC_CH_POT          = 0x01U,    	// Potentiometer position feedback
-  SEN_FB_ADC_CH_CUR          = 0x02U,    	// Current feedback
-  SEN_FB_ADC_CH_VOL          = 0x03U    	// Voltage feedback
+  SEN_FB_ADC_CH_MAG	     		= 0x00U,		// Magnetic position feedback
+  SEN_FB_ADC_CH_POT         = 0x01U,    // Potentiometer position feedback
+  SEN_FB_ADC_CH_CUR         = 0x02U,    // Current feedback
+  SEN_FB_ADC_CH_VOL         = 0x03U    	// Voltage feedback
 } SenFbAdcChType_t;
 
 typedef struct
@@ -42,26 +42,35 @@ private:
   // Load cell
   HX711Driver			*_load_cell;
 
+  // Temperatures
+  DS18B20Driver *_temp_sensors;
+
+public:
   // State
   SensorState_t			_state;
 
 public:
-  SenFbDriver(ADC_HandleTypeDef *hadcx, HX711Driver *load_cell) : _hadcx(hadcx), _load_cell(load_cell) {}
+  SenFbDriver(ADC_HandleTypeDef *hadcx,
+							HX711Driver *load_cell,
+							DS18B20Driver *temp_sensors) :
+							_hadcx(hadcx),
+							_load_cell(load_cell),
+							_temp_sensors(temp_sensors)
+  {
+  }
 
   void update(void)
   {
-    // Read load cell
-    uint32_t load_cell_adc_val;
-    _load_cell->read(&load_cell_adc_val);
-
-    // Trigger new ADC measurements
-    _adcx_conv_cplt = 1;
-    HAL_ADC_Start_DMA(_hadcx, (uint32_t *)_adc_buf, SEN_FB_ADC_NB_CH);
+  	update_torque();
+  	update_temperatures();
+  	start_adc();
   }
 
   void update_torque(void)
   {
-
+    // Read load cell
+    uint32_t load_cell_adc_val;
+    _load_cell->read(&load_cell_adc_val);
   }
 
   void update_angle(void)
@@ -82,9 +91,17 @@ public:
     }
   }
 
-  void update_temperature(void)
+  void update_temperatures(void)
   {
+  	_temp_sensors->read_all_temperatures();
+  	_state.temperature_degc = _temp_sensors->get_temperature(0).temp;
+  }
 
+  // Trigger new ADC measurements
+  uint8_t start_adc(void)
+  {
+    _adcx_conv_cplt = 0;
+    return (HAL_ADC_Start_DMA(_hadcx, (uint32_t *)_adc_buf, SEN_FB_ADC_NB_CH) == HAL_OK);
   }
 
   ADC_TypeDef *get_adc_instance(void)

@@ -8,7 +8,6 @@
 #ifndef DRIVERS_INC_HX711_DRIVER_HH_
 #define DRIVERS_INC_HX711_DRIVER_HH_
 
-#include "waiter_us.h"
 #include "main.h"
 
 class HX711Driver

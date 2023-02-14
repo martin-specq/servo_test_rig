@@ -10,26 +10,25 @@
 
 #include "main.h"
 #include <string.h>
-#include <waiter_us.h>
 #include "ds18b20_defs.h"
 
 /** Max number of sensors allowed to be placed on the bus. */
-#define SENSORS_MAX 							12U
+#define ONE_WIRE_SENSORS_MAX 							12U
 
 class OneWireDriver
 {
 
 private:
-	GPIO_TypeDef *_gpiox; 								/*!< gpiox to be used for I/O functions */
-	uint16_t _gpio_pin; 									/*!< gpio pin to be used for I/O functions */
-	uint8_t _last_discrepancy = 0; 				/*!< search private */
-	uint8_t _last_family_discrepancy = 0; /*!< search private */
-	uint8_t _last_device_flag = 0; 				/*!< search private */
+	GPIO_TypeDef *_gpiox; 													/*!< gpiox to be used for I/O functions */
+	uint16_t _gpio_pin; 														/*!< gpio pin to be used for I/O functions */
+	uint8_t _last_discrepancy = 0; 									/*!< search private */
+	uint8_t _last_family_discrepancy = 0; 					/*!< search private */
+	uint8_t _last_device_flag = 0; 									/*!< search private */
 
 public:
-	size_t _num_roms = 0; 								/*!< number of devices found */
-	uint8_t _rom_no[8]; 									/*!< 8-bytes address of last search device */
-	uint8_t _found_roms[SENSORS_MAX][8]; 	/*!< list of 8-bytes address of all devices found */
+	size_t _num_roms = 0; 													/*!< number of devices found */
+	uint8_t _rom_no[8]; 														/*!< 8-bytes address of last search device */
+	uint8_t _found_roms[ONE_WIRE_SENSORS_MAX][8]; 	/*!< list of 8-bytes address of all devices found */
 
 public:
 	OneWireDriver(GPIO_TypeDef *gpiox, uint16_t gpio_pin) :

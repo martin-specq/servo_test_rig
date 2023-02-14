@@ -22,19 +22,23 @@
 
 #pragma once
 
-#include "waiter_us.h"
 #include "ds18b20_defs.h"
 #include "one_wire_driver.hh"
 #include "main.h"
+
+typedef struct
+{
+	float temp;
+	uint16_t sensor_id;
+} TemperatureMsg_t;
 
 
 class DS18B20Driver {
 
   private:
-    OneWireDriver *_bus;
-
-  public:
-    uint8_t device_count = 0;
+    OneWireDriver 		*_bus;
+    TemperatureMsg_t 	_temperatures[ONE_WIRE_SENSORS_MAX];
+    uint8_t _device_count = 0;
 
   public: DS18B20Driver(OneWireDriver *bus) : _bus(bus) {}
 
@@ -82,5 +86,9 @@ class DS18B20Driver {
     // and eventually reads and records the values of all temperatures.
     //
     void read_all_temperatures();
+
+    TemperatureMsg_t get_temperature(size_t i);
+
+    uint8_t get_device_count();
   
 };
