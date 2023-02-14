@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -24,11 +25,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sensor_feedback_driver.hh"
 #include "one_wire_driver.hh"
 #include "ds18b20_driver.hh"
 #include "high_level_controller.hh"
 #include "hx711_driver.hh"
-#include "sen_fb_driver.hh"
 #include "servo_p500_driver.hh"
 /* USER CODE END Includes */
 
@@ -68,7 +69,7 @@ ServoP500Driver servo(&htim2, TIM_CHANNEL_2);
 OneWireDriver ds18b20_1wire(DS18B20_GPIO_Port, DS18B20_Pin);
 DS18B20Driver temp_sensors(&ds18b20_1wire);
 HX711Driver load_cell(HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
-SenFbDriver sensors(&hadc1, &load_cell, &temp_sensors);
+SensorFeedbackDriver sensors(&hadc1, &load_cell, &temp_sensors);
 
 // High level controller
 ServoController servo_ctrl(&htim5, &servo, &sensors);
@@ -130,6 +131,8 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
   servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
@@ -599,7 +602,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     servo_ctrl.step();
     char msg[20];
-    sprintf(msg, "%.2f\r\n", sensors._state.temperature_degc);
+    sprintf(msg, "%.2f, %.2f, %.2f\r\n",
+						sensors._state.temperature_degc[0].temp,
+						sensors._state.temperature_degc[1].temp,
+						sensors._state.temperature_degc[2].temp);
     HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
   }
 }

@@ -5,11 +5,12 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_SEN_FB_DRIVER_HH_
-#define DRIVERS_INC_SEN_FB_DRIVER_HH_
+#ifndef DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
+#define DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
 
 #include "hx711_driver.hh"
 #include "current_amplifier_ina180.hh"
+#include "ds18b20_driver.hh"
 
 #define SEN_FB_ADC_NB_CH 4
 
@@ -27,17 +28,18 @@ typedef struct
   float angle_deg;
   float supply_current_a;
   float supply_voltage_v;
-  float temperature_degc;
+  TemperatureMsg_t temperature_degc[ONE_WIRE_SENSORS_MAX];
+  size_t nb_temp_sensors = 0;
 } SensorState_t;
 
-class SenFbDriver
+class SensorFeedbackDriver
 {
 private:
 
   // ADC
-  uint16_t 			_adc_buf[SEN_FB_ADC_NB_CH];
+  uint16_t 								_adc_buf[SEN_FB_ADC_NB_CH];
   ADC_HandleTypeDef    		*_hadcx;
-  uint8_t 			_adcx_conv_cplt = 0;
+  uint8_t 								_adcx_conv_cplt = 0;
 
   // Load cell
   HX711Driver			*_load_cell;
@@ -50,12 +52,12 @@ public:
   SensorState_t			_state;
 
 public:
-  SenFbDriver(ADC_HandleTypeDef *hadcx,
-							HX711Driver *load_cell,
-							DS18B20Driver *temp_sensors) :
-							_hadcx(hadcx),
-							_load_cell(load_cell),
-							_temp_sensors(temp_sensors)
+  SensorFeedbackDriver(ADC_HandleTypeDef *hadcx,
+							         HX711Driver *load_cell,
+							         DS18B20Driver *temp_sensors) :
+							         _hadcx(hadcx),
+							         _load_cell(load_cell),
+							         _temp_sensors(temp_sensors)
   {
   }
 
@@ -94,7 +96,11 @@ public:
   void update_temperatures(void)
   {
   	_temp_sensors->read_all_temperatures();
-  	_state.temperature_degc = _temp_sensors->get_temperature(0).temp;
+  	_state.nb_temp_sensors = _temp_sensors->get_device_count();
+  	for(size_t i=0; i<_state.nb_temp_sensors; i++)
+  	{
+  		_state.temperature_degc[i] = _temp_sensors->get_temperature(i);
+  	}
   }
 
   // Trigger new ADC measurements
@@ -117,4 +123,4 @@ public:
 
 
 
-#endif /* DRIVERS_INC_SEN_FB_DRIVER_HH_ */
+#endif /* DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_ */

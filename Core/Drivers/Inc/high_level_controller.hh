@@ -8,8 +8,7 @@
 #ifndef DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 #define DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 
-#include "sen_fb_driver.hh"
-
+#include "sensor_feedback_driver.hh"
 #include "servo_p500_driver.hh"
 #include "math.h"
 
@@ -39,16 +38,16 @@ typedef enum
 class ServoController
 {
 private:
-  TIM_HandleTypeDef				*_loop_timer;
-  ServoP500Driver				*_servo;
-  SenFbDriver					*_sensors;
-  ServoCtrlMode_t				_control_mode = SERVO_CTRL_MODE_DISABLE;
-  Waveform_t					_waveform;
+  TIM_HandleTypeDef							*_loop_timer;
+  ServoP500Driver								*_servo;
+  SensorFeedbackDriver					*_sensors;
+  ServoCtrlMode_t								_control_mode = SERVO_CTRL_MODE_DISABLE;
+  Waveform_t										_waveform;
 
 public:
   ServoController(TIM_HandleTypeDef *loop_timer,
 		  ServoP500Driver *servo,
-		  SenFbDriver *sensors):
+		  SensorFeedbackDriver *sensors):
 		  _loop_timer(loop_timer),
 		  _servo(servo),
 		  _sensors(sensors)
