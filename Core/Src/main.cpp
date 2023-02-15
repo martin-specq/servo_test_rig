@@ -135,7 +135,7 @@ int main(void)
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
   servo_ctrl.init();
-  servo_ctrl.create_waveform_trapezoidal(-60, 60, 2, 0.5);
+  servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
   //servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
   servo_ctrl.start_waveform();
   //servo_ctrl.start();
@@ -600,16 +600,23 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	static uint8_t n = 0;
   if(htim->Instance == servo_ctrl.get_loop_timer_instance())
   {
     servo_ctrl.step();
-    char msg[20];
-    /**sprintf(msg, "%.2f, %.2f, %.2f\r\n",
-						sensors._state.temperature_degc[0].temp,
-						sensors._state.temperature_degc[1].temp,
-						sensors._state.temperature_degc[2].temp);*/
-    sprintf(msg, "%ld\r\n", sensors._state.torque_nm);
-    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+    if(n++ == 50)
+    {
+    	char msg[100];
+			sprintf(msg, "lc: %ld, pot: %u, mag: %u, V: %.2f, I: %.2f, T: %.2f\r\n",
+							sensors._state.load_cell_adc_val,
+							sensors._state.pot_feedback_adc_val,
+							sensors._state.mag_feedback_adc_val,
+							sensors._state.supply_voltage_v,
+							sensors._state.supply_current_a,
+							sensors._state.temperature_degc[0].temp);
+			HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+			n = 0;
+    }
   }
 }
 

@@ -32,7 +32,7 @@ public:
 		           (P500_PULSE_WIDTH_MAX_US - P500_PULSE_WIDTH_MIN_US) +
 			   P500_PULSE_WIDTH_MIN_US;
 
-    float duty_cycle = pulse_width_us * TIM_CLK_FREQ_HZ / 1000000.0;
+    float duty_cycle = pulse_width_us * P500_PWM_FREQUENCY_HZ / 1000000.0;
 
     if(duty_cycle >= 0 && duty_cycle <= 1)
     {

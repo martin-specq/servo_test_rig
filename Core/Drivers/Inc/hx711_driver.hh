@@ -45,11 +45,11 @@ public:
 		{
 			// Clock rising edge
 			HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_SET);
-			delay_us(1);
+			delay_us(10);
 
 			// Clock falling edge
 			HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_RESET);
-			delay_us(1);
+			delay_us(10);
 
 			// Shift data
 			*data = *data << 1;
@@ -63,9 +63,9 @@ public:
 
 		// 25th clock pulse (input: A, gain: 128)
 		HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_SET);
-		delay_us(1);
+		delay_us(10);
 		HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_RESET);
-		delay_us(1);
+		delay_us(10);
 
 		// Convert 24 bits signed data into 32 bits signed data
 		if(*data & 0x800000)

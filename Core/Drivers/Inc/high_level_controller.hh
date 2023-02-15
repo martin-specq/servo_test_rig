@@ -59,12 +59,14 @@ public:
 
   void start()
   {
+  	_servo->start();
     HAL_TIM_Base_Start_IT(_loop_timer);
   }
 
   void stop()
   {
     _control_mode = SERVO_CTRL_MODE_DISABLE;
+    _servo->stop();
     HAL_TIM_Base_Stop_IT(_loop_timer);
   }
 

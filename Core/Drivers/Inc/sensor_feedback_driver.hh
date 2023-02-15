@@ -24,8 +24,9 @@ typedef enum
 
 typedef struct
 {
-	int32_t torque_nm;
-	float angle_deg;
+	int32_t load_cell_adc_val;
+	uint16_t pot_feedback_adc_val;
+	uint16_t mag_feedback_adc_val;
 	float supply_current_a;
 	float supply_voltage_v;
 	TemperatureMsg_t temperature_degc[ONE_WIRE_SENSORS_MAX];
@@ -65,30 +66,49 @@ public:
 
 	void update(void)
 	{
-		update_torque();
+		update_load_cell();
+		update_pot_feedback_adc_val();
+		update_mag_feedback_adc_val();
+		update_supply_voltage();
+		update_supply_current();
 		update_temperatures();
 		start_adc();
 	}
 
-	void update_torque(void)
+	void update_load_cell(void)
 	{
 		// Read load cell
 		int32_t load_cell_adc_val;
 		if(_load_cell->read(&load_cell_adc_val))
 		{
-			_state.torque_nm = load_cell_adc_val;
+			_state.load_cell_adc_val = load_cell_adc_val;
 		}
-
 	}
 
-	void update_angle(void)
+	void update_pot_feedback_adc_val(void)
 	{
+		if(_adcx_conv_cplt)
+		{
+			_state.pot_feedback_adc_val = _adc_buf[SEN_FB_ADC_CH_POT];
+		}
+	}
 
+	void update_mag_feedback_adc_val(void)
+	{
+		if(_adcx_conv_cplt)
+		{
+			_state.mag_feedback_adc_val = _adc_buf[SEN_FB_ADC_CH_MAG];
+		}
 	}
 
 	void update_supply_voltage(void)
 	{
-
+		if(_adcx_conv_cplt)
+		{
+			const float Rup = 6.8;
+			const float Rdown = 1;
+			_state.mag_feedback_adc_val = _adc_buf[SEN_FB_ADC_CH_VOL] * 3.3 / 4096 * (Rdown + Rup) / Rdown;
+		}
 	}
 
 	void update_supply_current(void)
@@ -110,7 +130,6 @@ public:
 		}
 	}
 
-	// Trigger new ADC measurements
 	uint8_t start_adc(void)
 	{
 		_adcx_conv_cplt = 0;
