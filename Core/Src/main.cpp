@@ -134,12 +134,13 @@ int main(void)
 
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
+  servo_ctrl.init();
   servo_ctrl.create_waveform_trapezoidal(-60, 60, 2, 0.5);
   //servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 2.0);
-  //servo_ctrl.start_waveform();
+  servo_ctrl.start_waveform();
   //servo_ctrl.start();
   //servo_ctrl.set_angle(60);
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+  //HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -603,10 +604,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     servo_ctrl.step();
     char msg[20];
-    sprintf(msg, "%.2f, %.2f, %.2f\r\n",
+    /**sprintf(msg, "%.2f, %.2f, %.2f\r\n",
 						sensors._state.temperature_degc[0].temp,
 						sensors._state.temperature_degc[1].temp,
-						sensors._state.temperature_degc[2].temp);
+						sensors._state.temperature_degc[2].temp);*/
+    sprintf(msg, "%ld\r\n", sensors._state.torque_nm);
     HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
   }
 }

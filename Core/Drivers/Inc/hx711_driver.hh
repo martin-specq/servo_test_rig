@@ -17,9 +17,7 @@ private:
 	uint16_t _clk_pin;
 	GPIO_TypeDef *_dat_gpio;
 	uint16_t _dat_pin;
-	int32_t _offset;
-	float _coef;
-	uint8_t _lock;
+	int32_t _offset = 0;
 
 public:
 	HX711Driver(GPIO_TypeDef *clk_gpio,
@@ -33,9 +31,9 @@ public:
 	{
 	}
 
-	uint8_t read(uint32_t *data)
+	uint8_t read(int32_t *data)
 	{
-		*data = 0U;
+		*data = 0x0;
 
 		// Check whether data is available
 		if(HAL_GPIO_ReadPin(_dat_gpio, _dat_pin) == GPIO_PIN_SET)
@@ -69,6 +67,14 @@ public:
 		HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_RESET);
 		delay_us(1);
 
+		// Convert 24 bits signed data into 32 bits signed data
+		if(*data & 0x800000)
+		{
+			*data |= 0xFF000000;
+		}
+
+		*data -= _offset;
+
 		return 1;
 	}
 
@@ -77,6 +83,23 @@ public:
 		HAL_GPIO_WritePin(GPIOB, _clk_pin, GPIO_PIN_SET);
 		delay_us(100);
 		HAL_GPIO_WritePin(_clk_gpio, _clk_pin, GPIO_PIN_RESET);
+	}
+
+	void tare(void)
+	{
+		const int8_t num_iter = 10;
+		uint8_t n = 0;
+		int32_t sum = 0;
+		while(n < num_iter)
+		{
+			int32_t data;
+			if(read(&data))
+			{
+				n++;
+				sum += data;
+			}
+		}
+		_offset = sum / num_iter;
 	}
 };
 

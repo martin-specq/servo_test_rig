@@ -52,6 +52,11 @@ public:
   {
   }
 
+  void init()
+  {
+  	_sensors->init();
+  }
+
   void start()
   {
     HAL_TIM_Base_Start_IT(_loop_timer);
