@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -30,6 +31,8 @@
 #include "high_level_controller.hh"
 #include "hx711_driver.hh"
 #include "servo_p500_driver.hh"
+#include "uart_driver.hh"
+#include "serial_interface.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,6 +72,11 @@ OneWireDriver ds18b20_1wire(DS18B20_GPIO_Port, DS18B20_Pin);
 DS18B20Driver temp_sensors(&ds18b20_1wire);
 HX711Driver load_cell(HX711_CLK_GPIO_Port, HX711_CLK_Pin, HX711_DATA_GPIO_Port, HX711_DATA_Pin);
 SensorFeedbackDriver sensors(&hadc1, &load_cell, &temp_sensors);
+
+// host-PC interface
+UartDriver serial2(&huart2);
+SerialInterface host_pc(&serial2);
+
 
 // High level controller
 ServoController servo_ctrl(&htim5, &servo, &sensors);
@@ -134,6 +142,7 @@ int main(void)
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
   servo_ctrl.init();
+  servo_ctrl.start();
   //servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
   servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 5.0);
   servo_ctrl.start_waveform();
@@ -160,7 +169,7 @@ int main(void)
 						sensors._state.supply_voltage_v,
 						sensors._state.supply_current_a,
 						sensors._state.temperature_degc[0].temp);
-		/**sprintf(msg, "%u, %u, %u, %u\r\n",
+		sprintf(msg, "%u, %u, %u, %u\r\n",
 						sensors._adc_buf[0],
 						sensors._adc_buf[1],
 						sensors._adc_buf[2],

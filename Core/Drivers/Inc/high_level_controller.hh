@@ -27,10 +27,10 @@ typedef struct
 
 typedef enum
 {
-	SERVO_CTRL_MODE_DISABLE = 0x00U,	// Servo control disable
-	SERVO_CTRL_MODE_WAVEFORM = 0x01U,    	// Waveform control mode
-	SERVO_CTRL_MODE_MANUAL = 0x02U,    	// Manual control mode
-	SERVO_CTRL_MODE_CMD = 0x03U,    	// Command control mode
+	SERVO_CTRL_MODE_DISABLE 	= 0x00U,			// Servo control disable
+	SERVO_CTRL_MODE_WAVEFORM 	= 0x01U,    	// Waveform control mode
+	SERVO_CTRL_MODE_MANUAL 		= 0x02U,    	// Manual control mode
+	SERVO_CTRL_MODE_CMD 			= 0x03U,    	// Command control mode
 } ServoCtrlMode_t;
 
 class ServoController
@@ -70,10 +70,15 @@ public:
     HAL_TIM_Base_Stop_IT(_loop_timer);
   }
 
+  void set_angle(float angle_deg)
+  {
+  	_control_mode = SERVO_CTRL_MODE_CMD;
+  	_servo->set_angle(angle_deg);
+  }
+
   void start_waveform()
   {
     _control_mode = SERVO_CTRL_MODE_WAVEFORM;
-    start();
   }
 
   uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
@@ -153,8 +158,6 @@ public:
 
 		return 1;
 	}
-
-
 
 	void step(void)
 	{
