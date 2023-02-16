@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -603,7 +602,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	static uint8_t n = 0;
   if(htim->Instance == servo_ctrl.get_loop_timer_instance())
   {
-    servo_ctrl.step();
     if(n++ == 50)
     {
     	char msg[100];
@@ -617,6 +615,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 			n = 0;
     }
+    servo_ctrl.step();
+    /**
+    char msg[100];
+		sprintf(msg, "%u, %u & %u, %u, %u\r\n",
+						sensors._adc_buf[0],
+						sensors._state.pot_feedback_adc_val,
+						sensors._adc_buf[1],
+						sensors._adc_buf[2],
+						sensors._adc_buf[3]);
+		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+  	servo_ctrl.step();*/
   }
 }
 
@@ -625,7 +634,20 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   if(hadc->Instance == sensors.get_adc_instance())
   {
     sensors.on_adc_cplt_conv();
-    /**char msg[20] = "coucou adc\r\n";
+    /**char msg[100];
+		sprintf(msg, "%u, %u, %u, %u\r\n",
+						sensors._adc_buf[0],
+						sensors._adc_buf[1],
+						sensors._adc_buf[2],
+						sensors._adc_buf[3]);
+		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
+    /**char msg[100];
+		sprintf(msg, "%u, %u & %u, %u, %u\r\n",
+						sensors._adc_buf[0],
+						sensors._state.pot_feedback_adc_val,
+						sensors._adc_buf[1],
+						sensors._adc_buf[2],
+						sensors._adc_buf[3]);
 		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
   }
 }
