@@ -11,6 +11,7 @@
 #include "hx711_driver.hh"
 #include "current_amplifier_ina180.hh"
 #include "ds18b20_driver.hh"
+#include "filter.hh"
 
 #define SEN_FB_ADC_NB_CH 4
 
@@ -41,6 +42,9 @@ private:
 	uint16_t _adc_buf[SEN_FB_ADC_NB_CH];
 	ADC_HandleTypeDef *_hadcx;
 	uint8_t _adcx_conv_cplt = 0;
+
+	// Filter for servo magnetometer feedback
+	Filter<uint16_t> _mag_fb_filter;
 
 	// Load cell
 	HX711Driver *_load_cell;
@@ -97,7 +101,8 @@ public:
 	{
 		if(_adcx_conv_cplt)
 		{
-			_state.mag_feedback_adc_val = _adc_buf[SEN_FB_ADC_CH_MAG];
+			_mag_fb_filter.update(_adc_buf[SEN_FB_ADC_CH_MAG]);
+			_state.mag_feedback_adc_val = _mag_fb_filter.apply_mean(16);
 		}
 	}
 
@@ -107,7 +112,7 @@ public:
 		{
 			const float Rup = 6.8;
 			const float Rdown = 1;
-			_state.mag_feedback_adc_val = _adc_buf[SEN_FB_ADC_CH_VOL] * 3.3 / 4096 * (Rdown + Rup) / Rdown;
+			_state.supply_voltage_v = _adc_buf[SEN_FB_ADC_CH_VOL] * 3.3 / 4096 * (Rdown + Rup) / Rdown;
 		}
 	}
 
