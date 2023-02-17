@@ -141,6 +141,7 @@ int main(void)
 
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
+  serial2.start();
   servo_ctrl.init();
   servo_ctrl.start();
   //servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
@@ -148,7 +149,7 @@ int main(void)
   servo_ctrl.start_waveform();
   //servo_ctrl.start();
   //servo.set_angle(30);
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+  //HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -159,7 +160,7 @@ int main(void)
     sprintf(msg, "%.2f\r\n", servo_ctrl.get_voltage_fb());
     HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
     filter.update((uint32_t)(servo_ctrl.get_voltage_fb() / 3.3 * 4096));*/
-    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sensors._state.mag_feedback_adc_val);
+    //HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sensors._state.mag_feedback_adc_val);
     //HAL_Delay(20);
 		/**char msg[100];
 		sprintf(msg, "lc: %ld, pot: %u, mag: %u, V: %.2f, I: %.2f, T: %.2f\r\n",
@@ -175,6 +176,7 @@ int main(void)
 						sensors._adc_buf[2],
 						sensors._adc_buf[3]);
 		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
+  	//host_pc.read();
 		HAL_Delay(20);
     /* USER CODE END WHILE */
 
@@ -621,6 +623,24 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == serial2.get_instance())
+	{
+		serial2.on_tx_completed();
+	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == serial2.get_instance())
+	{
+		serial2.on_rx_completed();
+		/**uint8_t byte = serial2.read();
+		serial2.write(&byte, 1);*/
+	}
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if(htim->Instance == servo_ctrl.get_loop_timer_instance())

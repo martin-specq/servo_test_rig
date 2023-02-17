@@ -41,7 +41,7 @@ class UartDriver
   public:
     void start()
     {
-      if (HAL_UART_Receive_DMA(_huartx, &_read_byte, 1) != HAL_OK)
+      if (HAL_UART_Receive_IT(_huartx, &_read_byte, 1) != HAL_OK)
       {
         Error_Handler();
       }
@@ -114,6 +114,7 @@ class UartDriver
     void on_rx_completed()
     {
       _read_buf.put(_read_byte);
+      start();
     }
 
   public:
