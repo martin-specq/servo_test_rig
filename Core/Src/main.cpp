@@ -79,7 +79,7 @@ SerialInterface host_pc(&serial2);
 
 
 // High level controller
-ServoController servo_ctrl(&htim5, &servo, &sensors);
+ServoController servo_ctrl(&htim5, &servo, &sensors, &host_pc);
 
 /* USER CODE END PV */
 

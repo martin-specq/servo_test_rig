@@ -10,6 +10,7 @@
 
 #include "sensor_feedback_driver.hh"
 #include "servo_p500_driver.hh"
+#include "serial_interface.hh"
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
@@ -39,16 +40,20 @@ private:
   TIM_HandleTypeDef							*_loop_timer;
   ServoP500Driver								*_servo;
   SensorFeedbackDriver					*_sensors;
+  SerialInterface								*_host_pc;
   ServoCtrlMode_t								_control_mode = SERVO_CTRL_MODE_DISABLE;
   Waveform_t										_waveform;
+
 
 public:
   ServoController(TIM_HandleTypeDef *loop_timer,
 		  ServoP500Driver *servo,
-		  SensorFeedbackDriver *sensors):
+		  SensorFeedbackDriver *sensors,
+			SerialInterface *host_pc):
 		  _loop_timer(loop_timer),
 		  _servo(servo),
-		  _sensors(sensors)
+		  _sensors(sensors),
+			_host_pc(host_pc)
   {
   }
 
@@ -162,6 +167,55 @@ public:
 	void step(void)
 	{
 		_sensors->update();
+		SiCmd_t cmd_code = _host_pc->read();
+		if(cmd_code == CMD_NO_CMD)
+		{
+		}
+		else if(cmd_code == CMD_SERVO_ARM)
+		{
+			start();
+		}
+		else if(cmd_code == CMD_SERVO_DISARM)
+		{
+			stop();
+		}
+		else if(cmd_code == CMD_SERVO_SET_ANGLE)
+		{
+			float angle_deg = 0;
+			_control_mode = SERVO_CTRL_MODE_CMD;
+			_host_pc->get_target_angle(&angle_deg);
+			set_angle(angle_deg);
+		}
+		else if(cmd_code == CMD_SERVO_START_MANUAL_CTRL)
+		{
+			_control_mode = SERVO_CTRL_MODE_MANUAL;
+		}
+		else if(cmd_code == CMD_SERVO_START_SIN)
+		{
+			float angle_min_deg = 0;
+			float angle_max_deg = 0;
+			float period_s = 0;
+			_host_pc->get_sin_params(&angle_min_deg, &angle_max_deg, &period_s);
+			create_waveform_sinusoidal(angle_min_deg, angle_max_deg, period_s);
+			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+		}
+		else if(cmd_code == CMD_SERVO_START_TRAP)
+		{
+			float angle_min_deg = 0;
+			float angle_max_deg = 0;
+			float period_s = 0;
+			float plateau_time_s = 0;
+			_host_pc->get_trap_params(&angle_min_deg, &angle_max_deg, &period_s, &plateau_time_s);
+			create_waveform_trapezoidal(angle_min_deg, angle_max_deg, period_s, plateau_time_s);
+			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+		}
+		else if(cmd_code == CMD_STREAM_START)
+		{
+		}
+		else if(cmd_code == CMD_STREAM_STOP)
+		{
+		}
+
 		if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
 		{
 			_servo->set_angle(_waveform.values[_waveform.head]);
@@ -169,11 +223,9 @@ public:
 		}
 		else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
 		{
-
 		}
 		else if(_control_mode == SERVO_CTRL_MODE_CMD)
 		{
-
 		}
 
 	}

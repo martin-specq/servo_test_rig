@@ -8,6 +8,8 @@
 #ifndef DRIVERS_INC_SERIAL_INTERFACE_HH_
 #define DRIVERS_INC_SERIAL_INTERFACE_HH_
 
+#include <string.h>
+
 #include "main.h"
 #include "uart_driver.hh"
 
@@ -99,6 +101,26 @@ public:
 			}
 		}
 		return CMD_NO_CMD;
+	}
+
+	void get_sin_params(float *angle_min_deg, float *angle_max_deg, float *period_s)
+	{
+		memcpy((void *)angle_min_deg, (void *)&_cmd_buf[1], sizeof(float));
+		memcpy((void *)angle_max_deg, (void *)&_cmd_buf[5], sizeof(float));
+		memcpy((void *)period_s, (void *)&_cmd_buf[9], sizeof(float));
+	}
+
+	void get_trap_params(float *angle_min_deg, float *angle_max_deg, float *period_s, float *plateau_time_s)
+	{
+		memcpy((void *)angle_min_deg, (void *)&_cmd_buf[1], sizeof(float));
+		memcpy((void *)angle_max_deg, (void *)&_cmd_buf[5], sizeof(float));
+		memcpy((void *)period_s, (void *)&_cmd_buf[9], sizeof(float));
+		memcpy((void *)plateau_time_s, (void *)&_cmd_buf[13], sizeof(float));
+	}
+
+	void get_target_angle(float *angle_deg)
+	{
+		memcpy((void *)angle_deg, (void *)&_cmd_buf[1], sizeof(float));
 	}
 
 private:
