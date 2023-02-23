@@ -40,12 +40,12 @@ public:
     }
   }
 
-  void start()
+  void start_pwm()
   {
     HAL_TIM_PWM_Start(_htimx, _timx_channel);
   }
 
-  void stop()
+  void stop_pwm()
   {
     HAL_TIM_PWM_Stop(_htimx, _timx_channel);
   }

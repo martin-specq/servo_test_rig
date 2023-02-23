@@ -14,7 +14,6 @@
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
-#define SERVO_CTRL_LOOP_PERIOD_US 20000
 
 #define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
@@ -64,15 +63,17 @@ public:
 		HAL_TIM_Base_Start(_interval_waiter);
 	}
 
-	void start()
+	void arm()
 	{
-		_servo->start();
+		_servo->start_pwm();
+		set_angle(0);
 	}
 
-	void stop()
+	void disarm()
 	{
 		_control_mode = SERVO_CTRL_MODE_DISABLE;
-		_servo->stop();
+		set_angle(0);
+		_servo->stop_pwm();
 	}
 
 	void set_angle(float angle_deg)
@@ -181,11 +182,11 @@ public:
 		}
 		else if(cmd_code == CMD_SERVO_ARM)
 		{
-			start();
+			arm();
 		}
 		else if(cmd_code == CMD_SERVO_DISARM)
 		{
-			stop();
+			disarm();
 		}
 		else if(cmd_code == CMD_SERVO_SET_ANGLE)
 		{
