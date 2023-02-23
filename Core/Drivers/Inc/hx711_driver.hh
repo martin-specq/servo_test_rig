@@ -87,19 +87,26 @@ public:
 
 	void tare(void)
 	{
-		const int8_t num_iter = 10;
-		uint8_t n = 0;
+		const int8_t n_readings_max = 10;
+		const uint16_t n_trials_max = 1000;
+		uint8_t n_readings = 0;
+		uint16_t n_trials = 0;
 		int32_t sum = 0;
-		while(n < num_iter)
+
+		while(n_readings < n_readings_max)
 		{
 			int32_t data;
 			if(read(&data))
 			{
-				n++;
+				n_readings++;
 				sum += data;
 			}
+			if(n_trials++ == n_trials_max)
+			{
+				return;
+			}
 		}
-		_offset = sum / num_iter;
+		_offset = sum / n_readings;
 	}
 };
 
