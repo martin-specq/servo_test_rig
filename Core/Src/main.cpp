@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -61,6 +60,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -143,11 +143,10 @@ int main(void)
   HAL_TIM_Base_Start(&htim1);
   serial2.start();
   servo_ctrl.init();
-  servo_ctrl.start();
-  //servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
-  servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 5.0);
-  servo_ctrl.start_waveform();
   //servo_ctrl.start();
+  //servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
+  //servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 5.0);
+  //servo_ctrl.start_waveform();
   //servo.set_angle(30);
   //HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
   /* USER CODE END 2 */
@@ -156,6 +155,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+  	servo_ctrl.step();
     /**char msg[10];
     sprintf(msg, "%.2f\r\n", servo_ctrl.get_voltage_fb());
     HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
@@ -177,7 +177,7 @@ int main(void)
 						sensors._adc_buf[3]);
 		HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);*/
   	//host_pc.read();
-		HAL_Delay(20);
+		//HAL_Delay(20);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -560,6 +560,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
@@ -643,10 +646,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  if(htim->Instance == servo_ctrl.get_loop_timer_instance())
+  /**if(htim->Instance == servo_ctrl.get_loop_timer_instance())
   {
     servo_ctrl.step();
-  }
+  }*/
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)

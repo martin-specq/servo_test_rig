@@ -14,6 +14,7 @@
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
+#define SERVO_CTRL_LOOP_PERIOD_US 20000
 
 #define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
@@ -21,126 +22,127 @@
 
 typedef struct
 {
-  float 		values[SERVO_CTRL_WF_MAX_LEN] 			= {0};
-  size_t 		len 						= SERVO_CTRL_WF_MAX_LEN;
-  size_t 		head						= 0;
+	float values[SERVO_CTRL_WF_MAX_LEN] =
+	{ 0 };
+	size_t len = SERVO_CTRL_WF_MAX_LEN;
+	size_t head = 0;
 } Waveform_t;
 
 typedef enum
 {
-	SERVO_CTRL_MODE_DISABLE 	= 0x00U,			// Servo control disable
-	SERVO_CTRL_MODE_WAVEFORM 	= 0x01U,    	// Waveform control mode
-	SERVO_CTRL_MODE_MANUAL 		= 0x02U,    	// Manual control mode
-	SERVO_CTRL_MODE_CMD 			= 0x03U,    	// Command control mode
+	SERVO_CTRL_MODE_DISABLE = 0x00U,			// Servo control disable
+	SERVO_CTRL_MODE_WAVEFORM = 0x01U,    	// Waveform control mode
+	SERVO_CTRL_MODE_MANUAL = 0x02U,    	// Manual control mode
+	SERVO_CTRL_MODE_CMD = 0x03U,    	// Command control mode
 } ServoCtrlMode_t;
 
 class ServoController
 {
 private:
-  TIM_HandleTypeDef							*_loop_timer;
-  ServoP500Driver								*_servo;
-  SensorFeedbackDriver					*_sensors;
-  SerialInterface								*_host_pc;
-  ServoCtrlMode_t								_control_mode = SERVO_CTRL_MODE_DISABLE;
-  Waveform_t										_waveform;
-
+	TIM_HandleTypeDef *_interval_waiter;
+	ServoP500Driver *_servo;
+	SensorFeedbackDriver *_sensors;
+	SerialInterface *_host_pc;
+	ServoCtrlMode_t _control_mode = SERVO_CTRL_MODE_DISABLE;
+	Waveform_t _waveform;
 
 public:
-  ServoController(TIM_HandleTypeDef *loop_timer,
-		  ServoP500Driver *servo,
-		  SensorFeedbackDriver *sensors,
-			SerialInterface *host_pc):
-		  _loop_timer(loop_timer),
-		  _servo(servo),
-		  _sensors(sensors),
-			_host_pc(host_pc)
-  {
-  }
-
-  void init()
-  {
-  	_sensors->init();
-  }
-
-  void start()
-  {
-  	_servo->start();
-    HAL_TIM_Base_Start_IT(_loop_timer);
-  }
-
-  void stop()
-  {
-    _control_mode = SERVO_CTRL_MODE_DISABLE;
-    _servo->stop();
-    HAL_TIM_Base_Stop_IT(_loop_timer);
-  }
-
-  void set_angle(float angle_deg)
-  {
-  	_control_mode = SERVO_CTRL_MODE_CMD;
-  	_servo->set_angle(angle_deg);
-  }
-
-  void start_waveform()
-  {
-    _control_mode = SERVO_CTRL_MODE_WAVEFORM;
-  }
-
-  uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg, float period_s)
-  {
-    float omega;
-    float loop_frequency_hz = (float)TIM_CLK_FREQ_HZ / __HAL_TIM_GET_AUTORELOAD(_loop_timer);
-
-    if(period_s >= SERVO_CTRL_WF_MIN_PERIOD_S && period_s <= SERVO_CTRL_WF_MAX_PERIOD_S)
-    {
-      _waveform.len = (size_t)(period_s * loop_frequency_hz);
-      omega = 2 * M_PI / period_s;
-    }
-    else
-    {
-      return 0;
-    }
-
-    if(angle_min_deg >= P500_ANGLE_MIN_DEG &&
-       angle_max_deg <= P500_ANGLE_MAX_DEG &&
-       angle_min_deg < angle_max_deg)
-    {
-      for(size_t i=0; i<_waveform.len; i++)
-      {
-	_waveform.values[i] = 0.5 * (angle_min_deg + angle_max_deg + (angle_max_deg - angle_min_deg) * sin(omega * i / loop_frequency_hz));
-      }
-    }
-    else
-    {
-      return 0;
-    }
-    return 1;
-  }
-
-	uint8_t create_waveform_trapezoidal(float angle_min_deg, float angle_max_deg, float period_s, float plateau_time_s)
+	ServoController(TIM_HandleTypeDef *interval_waiter,
+									ServoP500Driver *servo,
+									SensorFeedbackDriver *sensors,
+									SerialInterface *host_pc) :
+									_interval_waiter(interval_waiter),
+									_servo(servo),
+									_sensors(sensors),
+									_host_pc(host_pc)
 	{
-		float loop_frequency_hz = (float)TIM_CLK_FREQ_HZ / __HAL_TIM_GET_AUTORELOAD(_loop_timer);
+	}
 
+	void init()
+	{
+		_sensors->init();
+		HAL_TIM_Base_Start(_interval_waiter);
+	}
+
+	void start()
+	{
+		_servo->start();
+	}
+
+	void stop()
+	{
+		_control_mode = SERVO_CTRL_MODE_DISABLE;
+		_servo->stop();
+	}
+
+	void set_angle(float angle_deg)
+	{
+		_control_mode = SERVO_CTRL_MODE_CMD;
+		_servo->set_angle(angle_deg);
+	}
+
+	void start_waveform()
+	{
+		_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+	}
+
+	uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg,
+																		 float period_s)
+	{
+		float omega;
+
+		if(period_s >= SERVO_CTRL_WF_MIN_PERIOD_S
+				&& period_s <= SERVO_CTRL_WF_MAX_PERIOD_S)
+		{
+			_waveform.len = (size_t)(period_s * SERVO_CTRL_LOOP_FREQ_HZ);
+			omega = 2 * M_PI / period_s;
+		}
+		else
+		{
+			return 0;
+		}
+
+		if(angle_min_deg >= P500_ANGLE_MIN_DEG
+				&& angle_max_deg <= P500_ANGLE_MAX_DEG && angle_min_deg < angle_max_deg)
+		{
+			for(size_t i = 0; i < _waveform.len; i++)
+			{
+				_waveform.values[i] = 0.5
+						* (angle_min_deg + angle_max_deg
+								+ (angle_max_deg - angle_min_deg)
+										* sin(omega * i / SERVO_CTRL_LOOP_FREQ_HZ));
+			}
+		}
+		else
+		{
+			return 0;
+		}
+		return 1;
+	}
+
+	uint8_t create_waveform_trapezoidal(float angle_min_deg, float angle_max_deg,
+																			float period_s, float plateau_time_s)
+	{
 		// Check time parameters
-		if(period_s < SERVO_CTRL_WF_MIN_PERIOD_S ||
-			 period_s > SERVO_CTRL_WF_MAX_PERIOD_S ||
-			 2 * plateau_time_s > period_s)
+		if(period_s < SERVO_CTRL_WF_MIN_PERIOD_S
+				|| period_s > SERVO_CTRL_WF_MAX_PERIOD_S
+				|| 2 * plateau_time_s > period_s)
 		{
 			return 0;
 		}
 
 		// Check angle parameters
-		if(angle_min_deg < P500_ANGLE_MIN_DEG ||
-			 angle_max_deg > P500_ANGLE_MAX_DEG ||
-			 angle_min_deg >= angle_max_deg)
+		if(angle_min_deg < P500_ANGLE_MIN_DEG || angle_max_deg > P500_ANGLE_MAX_DEG
+				|| angle_min_deg >= angle_max_deg)
 		{
 			return 0;
 		}
 
-		_waveform.len = (size_t)(period_s * loop_frequency_hz);
+		_waveform.len = (size_t)(period_s * SERVO_CTRL_LOOP_FREQ_HZ);
 
-		size_t i1 = (size_t)(plateau_time_s * loop_frequency_hz);
-		size_t i2 = i1 + (size_t)((period_s / 2 - plateau_time_s) * loop_frequency_hz);
+		size_t i1 = (size_t)(plateau_time_s * SERVO_CTRL_LOOP_FREQ_HZ);
+		size_t i2 = i1
+				+ (size_t)((period_s / 2 - plateau_time_s) * SERVO_CTRL_LOOP_FREQ_HZ);
 		size_t i3 = i2 + i1;
 		_waveform.len = i3 + i2 - i1;
 
@@ -150,7 +152,8 @@ public:
 		}
 		for(size_t i = i1; i < i2; i++)
 		{
-			_waveform.values[i] = angle_min_deg + (angle_max_deg - angle_min_deg) / (i2 - i1) * (i - i1);
+			_waveform.values[i] = angle_min_deg
+					+ (angle_max_deg - angle_min_deg) / (i2 - i1) * (i - i1);
 		}
 		for(size_t i = i2; i < i3; i++)
 		{
@@ -158,7 +161,8 @@ public:
 		}
 		for(size_t i = i3; i < _waveform.len; i++)
 		{
-			_waveform.values[i] = angle_max_deg - (angle_max_deg - angle_min_deg) / (_waveform.len - i3) * (i - i3);
+			_waveform.values[i] = angle_max_deg
+					- (angle_max_deg - angle_min_deg) / (_waveform.len - i3) * (i - i3);
 		}
 
 		return 1;
@@ -166,6 +170,10 @@ public:
 
 	void step(void)
 	{
+		// Wait for next step
+		while(!__HAL_TIM_GET_FLAG(_interval_waiter, TIM_FLAG_UPDATE));
+		__HAL_TIM_CLEAR_FLAG(_interval_waiter, TIM_FLAG_UPDATE);
+
 		_sensors->update();
 		SiCmd_t cmd_code = _host_pc->read();
 		if(cmd_code == CMD_NO_CMD)
@@ -205,8 +213,10 @@ public:
 			float angle_max_deg = 0;
 			float period_s = 0;
 			float plateau_time_s = 0;
-			_host_pc->get_trap_params(&angle_min_deg, &angle_max_deg, &period_s, &plateau_time_s);
-			create_waveform_trapezoidal(angle_min_deg, angle_max_deg, period_s, plateau_time_s);
+			_host_pc->get_trap_params(&angle_min_deg, &angle_max_deg, &period_s,
+																&plateau_time_s);
+			create_waveform_trapezoidal(angle_min_deg, angle_max_deg, period_s,
+																	plateau_time_s);
 			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
 		}
 		else if(cmd_code == CMD_STREAM_START)
@@ -227,12 +237,6 @@ public:
 		else if(_control_mode == SERVO_CTRL_MODE_CMD)
 		{
 		}
-
-	}
-
-	TIM_TypeDef* get_loop_timer_instance(void)
-	{
-		return _loop_timer->Instance;
 	}
 };
 
