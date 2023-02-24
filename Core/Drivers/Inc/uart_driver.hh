@@ -3,10 +3,11 @@
 #include "main.h"
 #include <algorithm>
 
+#include "StreamInterface.hh"
 #include "CircularBuffer.hh"
 #include "Math.hh"
 
-class UartDriver
+class UartDriver : public StreamInterface
 {
   private:
     UART_HandleTypeDef *_huartx;
@@ -15,7 +16,7 @@ class UartDriver
   private:
     uint8_t _read_byte;
   private:
-    CircularBuffer<uint8_t, 300> _write_buf;
+    CircularBuffer<uint8_t, 600> _write_buf;
   private:
     uint8_t _write_chunk[30];
   private:
@@ -150,19 +151,19 @@ class UartDriver
     // StreamInterface implementation.
 
   public:
-    size_t available()
+    size_t available() const override
     {
       return _read_buf.size();
     }
 
   public:
-    uint8_t read()
+    uint8_t read() override
     {
       return _read_buf.get();
     }
 
   public:
-    size_t write(const uint8_t *buf, size_t len)
+    size_t write(const uint8_t *buf, size_t len) override
     {
       if (_write_buf.available() < len)
       {

@@ -52,7 +52,6 @@ private:
 	// Temperatures
 	DS18B20Driver *_temp_sensors;
 
-public:
 	// State
 	SensorState_t _state;
 
@@ -135,6 +134,13 @@ public:
 		}
 	}
 
+	// Getters
+	SensorState_t get_state(void)
+	{
+		return _state;
+	}
+
+	// ADC functions
 	uint8_t start_adc(void)
 	{
 		_adcx_conv_cplt = 0;

@@ -11,6 +11,7 @@
 #include "sensor_feedback_driver.hh"
 #include "servo_p500_driver.hh"
 #include "serial_interface.hh"
+#include "Telemetry.hh"
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
@@ -38,22 +39,27 @@ typedef enum
 class ServoController
 {
 private:
+	const char *_source_id = "servo-tr";
+
 	TIM_HandleTypeDef *_interval_waiter;
 	ServoP500Driver *_servo;
 	SensorFeedbackDriver *_sensors;
 	SerialInterface *_host_pc;
 	ServoCtrlMode_t _control_mode = SERVO_CTRL_MODE_DISABLE;
 	Waveform_t _waveform;
+	telem::SerialWriter _telem;
 
 public:
 	ServoController(TIM_HandleTypeDef *interval_waiter,
 									ServoP500Driver *servo,
 									SensorFeedbackDriver *sensors,
-									SerialInterface *host_pc) :
+									SerialInterface *host_pc,
+									StreamInterface *stream_telem) :
 									_interval_waiter(interval_waiter),
 									_servo(servo),
 									_sensors(sensors),
-									_host_pc(host_pc)
+									_host_pc(host_pc),
+									_telem(*stream_telem)
 	{
 	}
 
@@ -61,6 +67,7 @@ public:
 	{
 		_sensors->init();
 		HAL_TIM_Base_Start(_interval_waiter);
+		arm();
 	}
 
 	void arm()
@@ -220,13 +227,8 @@ public:
 																	plateau_time_s);
 			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
 		}
-		else if(cmd_code == CMD_STREAM_START)
-		{
-		}
-		else if(cmd_code == CMD_STREAM_STOP)
-		{
-		}
 
+		// Servo actions
 		if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
 		{
 			_servo->set_angle(_waveform.values[_waveform.head]);
@@ -238,7 +240,23 @@ public:
 		else if(_control_mode == SERVO_CTRL_MODE_CMD)
 		{
 		}
+		log();
+	}
+
+	void log(void)
+	{
+		SensorState_t state = _sensors->get_state();
+		_telem.write_sequence_message();
+		_telem.write_message(telem::MSG_TAG_SOURCE_ID, strlen(_source_id), _source_id);
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{0, (float)state.load_cell_adc_val});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{2, (float)state.pot_feedback_adc_val});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{3, state.supply_current_a});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{4, state.supply_voltage_v});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.temperature_degc[0].temp});
 	}
 };
+
+
 
 #endif /* DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_ */

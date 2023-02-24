@@ -79,7 +79,7 @@ SerialInterface host_pc(&serial2);
 
 
 // High level controller
-ServoController servo_ctrl(&htim5, &servo, &sensors, &host_pc);
+ServoController servo_ctrl(&htim5, &servo, &sensors, &host_pc, &serial2);
 
 /* USER CODE END PV */
 
@@ -639,17 +639,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	if(huart->Instance == serial2.get_instance())
 	{
 		serial2.on_rx_completed();
-		/**uint8_t byte = serial2.read();
-		serial2.write(&byte, 1);*/
 	}
-}
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /**if(htim->Instance == servo_ctrl.get_loop_timer_instance())
-  {
-    servo_ctrl.step();
-  }*/
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
