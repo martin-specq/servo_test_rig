@@ -45,9 +45,9 @@ private:
 	ServoP500Driver *_servo;
 	SensorFeedbackDriver *_sensors;
 	SerialInterface *_host_pc;
+	telem::SerialWriter _telem;
 	ServoCtrlMode_t _control_mode = SERVO_CTRL_MODE_DISABLE;
 	Waveform_t _waveform;
-	telem::SerialWriter _telem;
 
 public:
 	ServoController(TIM_HandleTypeDef *interval_waiter,
@@ -59,7 +59,7 @@ public:
 									_servo(servo),
 									_sensors(sensors),
 									_host_pc(host_pc),
-									_telem(*stream_telem)
+									_telem(stream_telem)
 	{
 	}
 
@@ -245,6 +245,7 @@ public:
 
 	void log(void)
 	{
+
 		SensorState_t state = _sensors->get_state();
 		_telem.write_sequence_message();
 		_telem.write_message(telem::MSG_TAG_SOURCE_ID, strlen(_source_id), _source_id);
@@ -254,6 +255,7 @@ public:
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{3, state.supply_current_a});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{4, state.supply_voltage_v});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.temperature_degc[0].temp});
+
 	}
 };
 

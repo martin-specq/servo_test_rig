@@ -7,11 +7,11 @@
 namespace telem
 {
 
-SerialWriter::SerialWriter(StreamInterface &stream) : stream(stream)
+SerialWriter::SerialWriter(StreamInterface *stream) : stream(stream)
 {
   // Start with a COBS framing byte.
   uint8_t framing_byte = 0;
-  stream.write(&framing_byte, 1);
+  stream->write(&framing_byte, 1);
 }
 
 void SerialWriter::write_message(uint8_t tag, uint8_t length, const void *value)
@@ -30,7 +30,7 @@ void SerialWriter::write_message(uint8_t tag, uint8_t length, const void *value)
   size_t  message_cobs_length                = EncodeCOBS(message_buffer, bufferWriter.length(), message_cobs_buffer);
   message_cobs_buffer[message_cobs_length++] = 0; // COBS framing byte
 
-  stream.write(message_cobs_buffer, message_cobs_length);
+  stream->write(message_cobs_buffer, message_cobs_length);
 
   ++sequence_number;
 }

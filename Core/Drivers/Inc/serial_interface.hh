@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "main.h"
-#include "uart_driver.hh"
+#include "StreamInterface.hh"
 
 typedef enum
 {
@@ -33,11 +33,11 @@ typedef enum
 class SerialInterface
 {
 private:
-	UartDriver 	*_serialx;
+	StreamInterface 	*_stream;
 	uint8_t 		_cmd_buf[SI_CMD_BUFFER_SIZE] = {0};
 
 public:
-	SerialInterface(UartDriver *serialx) : _serialx(serialx)
+	SerialInterface(StreamInterface *stream) : _stream(stream)
 	{
 	}
 
@@ -52,10 +52,10 @@ public:
     // Message payload
     size_t payload;
 
-		while(_serialx->available())
+		while(_stream->available())
 		{
 			// Read next byte
-			uint8_t byte = _serialx->read();
+			uint8_t byte = _stream->read();
 
 			// Look for start header
 			if(!header_found)

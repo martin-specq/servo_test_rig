@@ -138,13 +138,13 @@ struct debug_msg
 class SerialWriter
 {
   private:
-    StreamInterface &stream;
+    StreamInterface *stream;
 
   private:
     uint8_t sequence_number = 0;
 
   public:
-    SerialWriter(StreamInterface &stream);
+    SerialWriter(StreamInterface *stream);
   public:
     void write_message(uint8_t tag, uint8_t length, const void *value);
   public:
