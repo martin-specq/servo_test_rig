@@ -39,7 +39,7 @@ typedef enum
 class ServoController
 {
 private:
-	const char *_source_id = "servo-tr";
+	const char *_source_id = "test-ser-x23";
 
 	TIM_HandleTypeDef *_interval_waiter;
 	ServoP500Driver *_servo;
@@ -250,11 +250,11 @@ public:
 		_telem.write_sequence_message();
 		_telem.write_message(telem::MSG_TAG_SOURCE_ID, strlen(_source_id), _source_id);
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{0, (float)state.load_cell_adc_val});
-		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
+		/**_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{2, (float)state.pot_feedback_adc_val});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{3, state.supply_current_a});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{4, state.supply_voltage_v});
-		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.temperature_degc[0].temp});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.temperature_degc[0].temp});*/
 
 	}
 };
