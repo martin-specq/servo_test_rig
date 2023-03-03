@@ -111,7 +111,9 @@ public:
 		{
 			const float Rup = 6.8;
 			const float Rdown = 1;
+			const float calibration = 1.039;
 			_state.supply_voltage_v = _adc_buf[SEN_FB_ADC_CH_VOL] * 3.3 / 4096 * (Rdown + Rup) / Rdown;
+			_state.supply_voltage_v *= calibration;
 		}
 	}
 

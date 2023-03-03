@@ -22,19 +22,27 @@
 
 typedef struct
 {
+	// Values
 	float values[SERVO_CTRL_WF_MAX_LEN] =
 	{ 0 };
 	size_t len = SERVO_CTRL_WF_MAX_LEN;
 	size_t head = 0;
-} Waveform_t;
 
-typedef enum
-{
-	SERVO_CTRL_MODE_DISABLE = 0x00U,			// Servo control disable
-	SERVO_CTRL_MODE_WAVEFORM = 0x01U,    	// Waveform control mode
-	SERVO_CTRL_MODE_MANUAL = 0x02U,    	// Manual control mode
-	SERVO_CTRL_MODE_CMD = 0x03U,    	// Command control mode
-} ServoCtrlMode_t;
+	// Parameters
+	float angle_min_deg = 0;
+	float angle_max_deg = 0;
+	float period_s = 0;
+
+	// Period sweep parameters
+	bool sweep_enabled = false;
+	float period_max_s = 0;
+	float period_min_s = 0;
+	uint32_t n_cycles = 0;
+  uint32_t cycles_per_period = 0;
+  float period_decrement_s = 0;
+
+	bool enabled = false;
+} Sinusoid_t;
 
 class ServoController
 {
@@ -46,8 +54,8 @@ private:
 	SensorFeedbackDriver *_sensors;
 	SerialInterface *_host_pc;
 	telem::SerialWriter _telem;
-	ServoCtrlMode_t _control_mode = SERVO_CTRL_MODE_DISABLE;
-	Waveform_t _waveform;
+	Sinusoid_t _waveform;
+	float _reference_deg;
 
 public:
 	ServoController(TIM_HandleTypeDef *interval_waiter,
@@ -76,22 +84,18 @@ public:
 		set_angle(0);
 	}
 
-	void disarm()
-	{
-		_control_mode = SERVO_CTRL_MODE_DISABLE;
-		set_angle(0);
-		_servo->stop_pwm();
-	}
-
 	void set_angle(float angle_deg)
 	{
-		_control_mode = SERVO_CTRL_MODE_CMD;
+		_reference_deg = angle_deg;
 		_servo->set_angle(angle_deg);
 	}
 
-	void start_waveform()
+	void stop_waveform(void)
 	{
-		_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+		_waveform.enabled = false;
+		_waveform.sweep_enabled = false;
+		_waveform.head = 0;
+		_reference_deg = 0;
 	}
 
 	uint8_t create_waveform_sinusoidal(float angle_min_deg, float angle_max_deg,
@@ -128,7 +132,7 @@ public:
 		return 1;
 	}
 
-	uint8_t create_waveform_trapezoidal(float angle_min_deg, float angle_max_deg,
+	/**uint8_t create_waveform_trapezoidal(float angle_min_deg, float angle_max_deg,
 																			float period_s, float plateau_time_s)
 	{
 		// Check time parameters
@@ -174,7 +178,7 @@ public:
 		}
 
 		return 1;
-	}
+	}*/
 
 	void step(void)
 	{
@@ -182,40 +186,35 @@ public:
 		while(!__HAL_TIM_GET_FLAG(_interval_waiter, TIM_FLAG_UPDATE));
 		__HAL_TIM_CLEAR_FLAG(_interval_waiter, TIM_FLAG_UPDATE);
 
+		// Read sensors
 		_sensors->update();
+
+		// Read user commands
 		SiCmd_t cmd_code = _host_pc->read();
+
+		// Update state
 		if(cmd_code == CMD_NO_CMD)
 		{
 		}
-		else if(cmd_code == CMD_SERVO_ARM)
+		else if(cmd_code == CMD_SERVO_STOP)
 		{
-			arm();
-		}
-		else if(cmd_code == CMD_SERVO_DISARM)
-		{
-			disarm();
+			stop_waveform();
 		}
 		else if(cmd_code == CMD_SERVO_SET_ANGLE)
 		{
+			stop_waveform();
 			float angle_deg = 0;
-			_control_mode = SERVO_CTRL_MODE_CMD;
 			_host_pc->get_target_angle(&angle_deg);
-			set_angle(angle_deg);
-		}
-		else if(cmd_code == CMD_SERVO_START_MANUAL_CTRL)
-		{
-			_control_mode = SERVO_CTRL_MODE_MANUAL;
+			_reference_deg = angle_deg;
 		}
 		else if(cmd_code == CMD_SERVO_START_SIN)
 		{
-			float angle_min_deg = 0;
-			float angle_max_deg = 0;
-			float period_s = 0;
-			_host_pc->get_sin_params(&angle_min_deg, &angle_max_deg, &period_s);
-			create_waveform_sinusoidal(angle_min_deg, angle_max_deg, period_s);
-			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+			_host_pc->get_sin_params(&_waveform.angle_min_deg, &_waveform.angle_max_deg, &_waveform.period_s);
+			create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
+			_waveform.enabled = true;
+			_waveform.sweep_enabled = false;
 		}
-		else if(cmd_code == CMD_SERVO_START_TRAP)
+		/**else if(cmd_code == CMD_SERVO_START_TRAP)
 		{
 			float angle_min_deg = 0;
 			float angle_max_deg = 0;
@@ -225,21 +224,69 @@ public:
 																&plateau_time_s);
 			create_waveform_trapezoidal(angle_min_deg, angle_max_deg, period_s,
 																	plateau_time_s);
-			_control_mode = SERVO_CTRL_MODE_WAVEFORM;
+			_waveform.enabled = true;
+			_waveform.sweep_enabled = false;
+		}*/
+		else if(cmd_code == CMD_SERVO_START_SIN_SWEEP)
+		{
+			_host_pc->get_sin_sweep_params(&_waveform.angle_min_deg,
+															       &_waveform.angle_max_deg,
+																		 &_waveform.period_min_s,
+																		 &_waveform.period_max_s,
+																		 &_waveform.period_decrement_s,
+																		 &_waveform.cycles_per_period);
+			if(_waveform.period_max_s > _waveform.period_min_s && _waveform.period_decrement_s > 0)
+			{
+				_waveform.period_s = _waveform.period_max_s;
+				create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
+				_waveform.enabled = true;
+				_waveform.sweep_enabled = true;
+			}
 		}
+		/**else if(cmd_code == CMD_SERVO_START_TRAP_SWEEP)
+		{
+			_waveform.enabled = true;
+			_waveform.sweep_enabled = true;
+		}*/
 
 		// Servo actions
-		if(_control_mode == SERVO_CTRL_MODE_WAVEFORM)
+		if(_waveform.enabled)
 		{
-			_servo->set_angle(_waveform.values[_waveform.head]);
-			_waveform.head = (_waveform.head + 1) % _waveform.len;
+			if(_waveform.sweep_enabled && _waveform.head == _waveform.len - 1)
+			{
+				// Check increase in frequency
+				if(++_waveform.n_cycles == _waveform.cycles_per_period)
+				{
+					// Reset number of cycles
+					_waveform.n_cycles = 0;
+
+					// Decrease period
+					_waveform.period_s -= _waveform.period_decrement_s;
+
+					// Check end of sweep
+					if(_waveform.period_s < _waveform.period_min_s)
+					{
+						stop_waveform();
+					}
+					else
+					{
+						create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
+					}
+				}
+			}
+
+			// Update reference if waveform still enabled
+			if(_waveform.enabled)
+			{
+				_reference_deg = _waveform.values[_waveform.head];
+				_waveform.head = (_waveform.head + 1) % _waveform.len;
+			}
 		}
-		else if(_control_mode == SERVO_CTRL_MODE_MANUAL)
-		{
-		}
-		else if(_control_mode == SERVO_CTRL_MODE_CMD)
-		{
-		}
+
+		// Apply reference
+		_servo->set_angle(_reference_deg);
+
+		// Log to Grafana
 		log();
 	}
 
@@ -250,11 +297,12 @@ public:
 		_telem.write_sequence_message();
 		_telem.write_message(telem::MSG_TAG_SOURCE_ID, strlen(_source_id), _source_id);
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{0, (float)state.load_cell_adc_val});
-		/**_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{2, (float)state.pot_feedback_adc_val});
-		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{3, state.supply_current_a});
-		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{4, state.supply_voltage_v});
-		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.temperature_degc[0].temp});*/
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{3, _reference_deg});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{4, state.supply_current_a});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{5, state.supply_voltage_v});
+		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{6, state.temperature_degc[0].temp});
 
 	}
 };

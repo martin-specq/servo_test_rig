@@ -16,15 +16,13 @@
 typedef enum
 {
 	CMD_NO_CMD										= 0x00,
-	CMD_SERVO_ARM									= 0x01,
-	CMD_SERVO_DISARM							= 0x02,
-	CMD_SERVO_SET_ANGLE 					= 0x03,
-	CMD_SERVO_START_SIN 					= 0x04,
-	CMD_SERVO_START_TRAP					= 0x05,
-	CMD_SERVO_START_MANUAL_CTRL		= 0x06,
-	CMD_STREAM_START							= 0x07,
-	CMD_STREAM_STOP								= 0x08,
-	CMD_ENUM_MAX									= 0x09,
+	CMD_SERVO_STOP								= 0x01,
+	CMD_SERVO_SET_ANGLE 					= 0x02,
+	CMD_SERVO_START_SIN 					= 0x03,
+	CMD_SERVO_START_TRAP					= 0x04,
+	CMD_SERVO_START_SIN_SWEEP 		= 0x05,
+	CMD_SERVO_START_TRAP_SWEEP		= 0x06,
+	CMD_ENUM_MAX									= 0x07,
 } SiCmd_t;
 
 #define SI_CMD_HEADER 0xAB
@@ -110,6 +108,23 @@ public:
 		memcpy((void *)period_s, (void *)&_cmd_buf[9], sizeof(float));
 	}
 
+	void get_sin_sweep_params(
+		float *angle_min_deg,
+		float *angle_max_deg,
+		float *period_min_s,
+		float *period_max_s,
+		float *period_decrement_s,
+		uint32_t *cycles_per_period
+	)
+	{
+		memcpy((void *)angle_min_deg, (void *)&_cmd_buf[1], sizeof(float));
+		memcpy((void *)angle_max_deg, (void *)&_cmd_buf[5], sizeof(float));
+		memcpy((void *)period_min_s, (void *)&_cmd_buf[9], sizeof(float));
+		memcpy((void *)period_max_s, (void *)&_cmd_buf[13], sizeof(float));
+		memcpy((void *)period_decrement_s, (void *)&_cmd_buf[17], sizeof(float));
+		memcpy((void *)cycles_per_period, (void *)&_cmd_buf[21], sizeof(float));
+	}
+
 	void get_trap_params(float *angle_min_deg, float *angle_max_deg, float *period_s, float *plateau_time_s)
 	{
 		memcpy((void *)angle_min_deg, (void *)&_cmd_buf[1], sizeof(float));
@@ -122,6 +137,8 @@ public:
 	{
 		memcpy((void *)angle_deg, (void *)&_cmd_buf[1], sizeof(float));
 	}
+
+
 
 private:
 	uint8_t cmd_valid(uint8_t byte)
@@ -147,15 +164,9 @@ private:
 				return 3 * sizeof(float);
 			case CMD_SERVO_START_TRAP:
 				return 4 * sizeof(float);
-			case CMD_SERVO_START_MANUAL_CTRL:
-				return 0;
-			case CMD_SERVO_ARM:
-				return 0;
-			case CMD_SERVO_DISARM:
-				return 0;
-			case CMD_STREAM_START:
-				return 0;
-			case CMD_STREAM_STOP:
+			case CMD_SERVO_START_SIN_SWEEP:
+				return 5 * sizeof(float) + 1 * sizeof(uint32_t);
+			case CMD_SERVO_STOP:
 				return 0;
 			default:
 				return 0;
