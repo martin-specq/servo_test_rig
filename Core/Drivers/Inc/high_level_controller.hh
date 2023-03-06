@@ -252,10 +252,10 @@ public:
 		// Servo actions
 		if(_waveform.enabled)
 		{
-			if(_waveform.sweep_enabled && _waveform.head == _waveform.len - 1)
+			if(_waveform.sweep_enabled && _waveform.head == 0)
 			{
 				// Check increase in frequency
-				if(++_waveform.n_cycles == _waveform.cycles_per_period)
+				if(_waveform.n_cycles == _waveform.cycles_per_period)
 				{
 					// Reset number of cycles
 					_waveform.n_cycles = 0;
@@ -273,6 +273,7 @@ public:
 						create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
 					}
 				}
+				_waveform.n_cycles++;
 			}
 
 			// Update reference if waveform still enabled
