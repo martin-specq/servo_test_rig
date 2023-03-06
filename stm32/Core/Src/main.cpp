@@ -138,15 +138,6 @@ int main(void)
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
   serial2.start();
-
-  //servo_ctrl.start();
-  //servo_ctrl.create_waveform_trapezoidal(-60, 60, 5, 0.5);
-  //servo_ctrl.create_waveform_sinusoidal(-60.0, 60.0, 5.0);
-  //servo_ctrl.start_waveform();
-  //servo.set_angle(30);
-  //HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-  //uint8_t i = 0;
-  // High level controller
   ServoController servo_ctrl(&htim5, &servo, &sensors, &host_pc, &serial2);
   servo_ctrl.init();
   /* USER CODE END 2 */
@@ -155,30 +146,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
   	servo_ctrl.step();
-
-    /**char msg[10];
-    sprintf(msg, "%.2f\r\n", servo_ctrl.get_voltage_fb());
-    HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-    filter.update((uint32_t)(servo_ctrl.get_voltage_fb() / 3.3 * 4096));
-    //HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sensors.get_state().mag_feedback_adc_val);
-    //HAL_Delay(20);*/
-  	/**if(i++ == 50)
-		{
-  		i = 0;
-			char msg[100];
-			sprintf(msg, "lc: %ld, pot: %u, mag: %u, V: %.2f, I: %.2f, T: %.2f\r\n",
-							sensors.get_state().load_cell_adc_val,
-							sensors.get_state().pot_feedback_adc_val,
-							sensors.get_state().mag_feedback_adc_val,
-							sensors.get_state().supply_voltage_v,
-							sensors.get_state().supply_current_a,
-							sensors.get_state().temperature_degc[0].temp);
-			HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-		}*/
-
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

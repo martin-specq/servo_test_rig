@@ -185,6 +185,8 @@ public:
 		while(!__HAL_TIM_GET_FLAG(_interval_waiter, TIM_FLAG_UPDATE));
 		__HAL_TIM_CLEAR_FLAG(_interval_waiter, TIM_FLAG_UPDATE);
 
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+
 		// Read sensors
 		_sensors->update();
 
@@ -288,6 +290,7 @@ public:
 
 		// Log to Grafana
 		log();
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_RESET);
 	}
 
 	void log(void)

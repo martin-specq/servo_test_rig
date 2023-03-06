@@ -1,3 +1,4 @@
-/.settings
+stm32/.settings
+stm32/Debug
 *.launch
-/Debug
+*.pyc
