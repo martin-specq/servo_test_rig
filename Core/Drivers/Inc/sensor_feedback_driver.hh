@@ -119,10 +119,13 @@ public:
 
 	void update_supply_current(void)
 	{
+		const float calibration_gain = 1.03;
+		const float calibration_offset = 0.2;
 		if(_adcx_conv_cplt)
 		{
 			_state.supply_current_a = _adc_buf[SEN_FB_ADC_CH_CUR] * 3.3 / 4096
 					/ INA180_GAIN / INA180_R_SHUNT;
+			_state.supply_current_a = _state.supply_current_a * calibration_gain + calibration_offset;
 		}
 	}
 
