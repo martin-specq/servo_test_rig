@@ -37,9 +37,10 @@ typedef struct
 	bool sweep_enabled = false;
 	float period_max_s = 0;
 	float period_min_s = 0;
-	uint32_t n_cycles = 0;
-  uint32_t cycles_per_period = 0;
-  float period_decrement_s = 0;
+	uint32_t cycles_count = 0;
+  uint32_t n_cycles_per_period = 0;
+  uint32_t periods_count = 0;
+  uint32_t n_periods = 0;
 
 	bool enabled = false;
 } Sinusoid_t;
@@ -92,9 +93,7 @@ public:
 
 	void stop_waveform(void)
 	{
-		_waveform.enabled = false;
-		_waveform.sweep_enabled = false;
-		_waveform.head = 0;
+		_waveform = {};
 		_reference_deg = 0;
 	}
 
@@ -233,9 +232,9 @@ public:
 															       &_waveform.angle_max_deg,
 																		 &_waveform.period_min_s,
 																		 &_waveform.period_max_s,
-																		 &_waveform.period_decrement_s,
-																		 &_waveform.cycles_per_period);
-			if(_waveform.period_max_s > _waveform.period_min_s && _waveform.period_decrement_s > 0)
+																		 &_waveform.n_periods,
+																		 &_waveform.n_cycles_per_period);
+			if(_waveform.period_max_s > _waveform.period_min_s && _waveform.n_periods > 0)
 			{
 				_waveform.period_s = _waveform.period_max_s;
 				create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
@@ -255,16 +254,16 @@ public:
 			if(_waveform.sweep_enabled && _waveform.head == 0)
 			{
 				// Check increase in frequency
-				if(_waveform.n_cycles == _waveform.cycles_per_period)
+				if(_waveform.cycles_count == _waveform.n_cycles_per_period)
 				{
 					// Reset number of cycles
-					_waveform.n_cycles = 0;
+					_waveform.cycles_count = 0;
 
 					// Decrease period
-					_waveform.period_s -= _waveform.period_decrement_s;
+					_waveform.period_s -= (_waveform.period_max_s - _waveform.period_min_s) / (_waveform.n_periods - 1);
 
 					// Check end of sweep
-					if(_waveform.period_s < _waveform.period_min_s)
+					if(++_waveform.periods_count == _waveform.n_periods)
 					{
 						stop_waveform();
 					}
@@ -273,7 +272,7 @@ public:
 						create_waveform_sinusoidal(_waveform.angle_min_deg, _waveform.angle_max_deg, _waveform.period_s);
 					}
 				}
-				_waveform.n_cycles++;
+				_waveform.cycles_count++;
 			}
 
 			// Update reference if waveform still enabled

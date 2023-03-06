@@ -113,16 +113,16 @@ public:
 		float *angle_max_deg,
 		float *period_min_s,
 		float *period_max_s,
-		float *period_decrement_s,
-		uint32_t *cycles_per_period
+		uint32_t *n_periods,
+		uint32_t *n_cycles_per_period
 	)
 	{
 		memcpy((void *)angle_min_deg, (void *)&_cmd_buf[1], sizeof(float));
 		memcpy((void *)angle_max_deg, (void *)&_cmd_buf[5], sizeof(float));
 		memcpy((void *)period_min_s, (void *)&_cmd_buf[9], sizeof(float));
 		memcpy((void *)period_max_s, (void *)&_cmd_buf[13], sizeof(float));
-		memcpy((void *)period_decrement_s, (void *)&_cmd_buf[17], sizeof(float));
-		memcpy((void *)cycles_per_period, (void *)&_cmd_buf[21], sizeof(float));
+		memcpy((void *)n_periods, (void *)&_cmd_buf[17], sizeof(uint32_t));
+		memcpy((void *)n_cycles_per_period, (void *)&_cmd_buf[21], sizeof(uint32_t));
 	}
 
 	void get_trap_params(float *angle_min_deg, float *angle_max_deg, float *period_s, float *plateau_time_s)
