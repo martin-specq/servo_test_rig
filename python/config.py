@@ -1,0 +1,2 @@
+USB_DEVICE = "/dev/ttyUSB0"
+BAUDRATE = 115200
