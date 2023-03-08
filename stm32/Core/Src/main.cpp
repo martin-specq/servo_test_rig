@@ -32,6 +32,7 @@
 #include "servo_p500_driver.hh"
 #include "uart_driver.hh"
 #include "serial_interface.hh"
+#include "timer_driver.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,8 @@ SensorFeedbackDriver sensors(&hadc1, &load_cell, &temp_sensors);
 // host-PC interface
 UartDriver serial(&huart1);
 SerialInterface host_pc(&serial);
+
+TimerDriver timer;
 
 /* USER CODE END PV */
 
@@ -141,7 +144,7 @@ int main(void)
   // delay_us() timer
   HAL_TIM_Base_Start(&htim1);
   serial.start();
-  ServoController servo_ctrl(&htim5, &servo, &sensors, &host_pc, &serial);
+  ServoController servo_ctrl(&timer, &servo, &sensors, &host_pc, &serial);
   servo_ctrl.init();
   /* USER CODE END 2 */
 

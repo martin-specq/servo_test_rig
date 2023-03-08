@@ -12,9 +12,11 @@
 #include "servo_p500_driver.hh"
 #include "serial_interface.hh"
 #include "Telemetry.hh"
+#include "IntervalWaiter.hh"
 #include "math.h"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
+#define SERVO_CTRL_LOOP_PER_US 20000
 
 #define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
@@ -49,8 +51,8 @@ class ServoController
 {
 private:
 	const char *_source_id = "test-ser-x23";
-
-	TIM_HandleTypeDef *_interval_waiter;
+	TimeSourceInterface *_time_source;
+	dfr::IntervalWaiter _interval_waiter;
 	ServoP500Driver *_servo;
 	SensorFeedbackDriver *_sensors;
 	SerialInterface *_host_pc;
@@ -59,12 +61,12 @@ private:
 	float _reference_deg;
 
 public:
-	ServoController(TIM_HandleTypeDef *interval_waiter,
+	ServoController(TimeSourceInterface *time_source,
 									ServoP500Driver *servo,
 									SensorFeedbackDriver *sensors,
 									SerialInterface *host_pc,
 									StreamInterface *stream_telem) :
-									_interval_waiter(interval_waiter),
+									_interval_waiter(time_source, SERVO_CTRL_LOOP_PER_US),
 									_servo(servo),
 									_sensors(sensors),
 									_host_pc(host_pc),
@@ -75,7 +77,6 @@ public:
 	void init()
 	{
 		_sensors->init();
-		HAL_TIM_Base_Start(_interval_waiter);
 		arm();
 	}
 
@@ -182,10 +183,11 @@ public:
 	void step(void)
 	{
 		// Wait for next step
-		while(!__HAL_TIM_GET_FLAG(_interval_waiter, TIM_FLAG_UPDATE));
-		__HAL_TIM_CLEAR_FLAG(_interval_waiter, TIM_FLAG_UPDATE);
+	  while (!_interval_waiter.next_interval())
+	  {
+	  }
 
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, GPIO_PIN_SET);
 
 		// Read sensors
 		_sensors->update();
@@ -299,6 +301,7 @@ public:
 		SensorState_t state = _sensors->get_state();
 		_telem.write_sequence_message();
 		_telem.write_message(telem::MSG_TAG_SOURCE_ID, strlen(_source_id), _source_id);
+	  _telem.write_message(telem::MSG_TAG_TIME_LOCAL, _interval_waiter.get_now_micros());
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{0, (float)state.load_cell_adc_val});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{1, (float)state.mag_feedback_adc_val});
 		_telem.write_message(telem::MSG_TAG_DEBUG_VALUES, telem::debug_msg{2, (float)state.pot_feedback_adc_val});
