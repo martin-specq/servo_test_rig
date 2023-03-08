@@ -1,6 +1,7 @@
 import serial
 import str_commands
 import argparse
+import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument('angle_min_deg', default='-30.0')
@@ -11,7 +12,7 @@ parser.add_argument('n_periods', default='10')
 parser.add_argument('n_cycles_per_per', default='5')
 args = parser.parse_args()
 
-ser = serial.Serial('/dev/ttyACM0',  115200) # open serial port
+ser = serial.Serial(config.USB_DEVICE,  config.BAUDRATE) # open serial port
 
 str_commands.start_sinusoidal_sweep(
     ser, 

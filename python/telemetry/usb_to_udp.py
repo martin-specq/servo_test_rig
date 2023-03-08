@@ -66,7 +66,7 @@ class SerialProtocol(asyncio.Protocol):
 async def main():
 
   parser = argparse.ArgumentParser(description='Proxy data between LLFC serial connection and UDP.')
-  parser.add_argument('--device', default='/dev/ttyACM0')
+  parser.add_argument('--device', default='/dev/ttyUSB0')
   parser.add_argument('--baudrate', default=115200)
   args = parser.parse_args()
 

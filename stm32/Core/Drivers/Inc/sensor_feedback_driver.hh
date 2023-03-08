@@ -74,7 +74,7 @@ public:
 		update_mag_feedback_adc_val();
 		update_supply_voltage();
 		update_supply_current();
-		update_temperatures();
+		//update_temperatures();
 		start_adc();
 	}
 
