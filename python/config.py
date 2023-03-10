@@ -1,2 +1,3 @@
-USB_DEVICE = "/dev/ttyUSB0"
+#USB_DEVICE = "/dev/ttyUSB0"
+USB_DEVICE = "COM5"
 BAUDRATE = 115200

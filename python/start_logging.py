@@ -7,12 +7,15 @@ from datetime import datetime, timedelta
 import serial_asyncio
 import socket
 import struct
-import telem
+import telemetry.telem as telem
+import websockets
+import os
 
-from protocol_udp import UdpProtocol
+WEBSOCKET_URI = (
+    os.environ.get("WEBSOCKET_URI") or "wss://telem.dufour.aero/stream/cm298y4c/d03"
+)
 
 crc16_func = crcmod.mkCrcFun(0x1011b, initCrc=0, rev=False)
-
 
 class SerialProtocol(asyncio.Protocol):
   def __init__(self, serial_closed):
@@ -66,42 +69,64 @@ class SerialProtocol(asyncio.Protocol):
 async def main():
 
   parser = argparse.ArgumentParser(description='Proxy data between LLFC serial connection and UDP.')
-  parser.add_argument('--device', default='/dev/ttyUSB0')
+  parser.add_argument('--device', default='COM5')
   parser.add_argument('--baudrate', default=115200)
   args = parser.parse_args()
 
   loop = asyncio.get_running_loop()
   terminate = loop.create_future()
 
-  # BIND_ADDR = "0.0.0.0" # "10.42.0.1"
-  BIND_ADDR = "224.3.39.32"
-  MULTICAST_ADDR = "224.3.39.31"  # LLFC to HLFC
-  MULTICAST_ADDR_RX = "224.3.39.32"  # HLFC to LLFC
-  INTERFACE_ADDR = "0.0.0.0" # "10.42.0.1"
-  SOCKET_PORT = 3931
-  SOCKET_RX_PORT = 3931
-
   sequence_micros = 0
   frame_buffer = bytearray()
+  connections = {}
+  frame_counter_by_size = {}
 
-  def create_multicast_socket():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    sock.bind((BIND_ADDR, SOCKET_RX_PORT))
+  def wss_send_frame(frame_cobs):
+    # Downsample data according to frame size.
+    frame_size = len(frame_cobs)
+    if frame_size not in frame_counter_by_size:
+        frame_counter_by_size[frame_size] = 0
 
-    def add_membership(addr):
-      mreq = socket.inet_aton(addr) + socket.inet_aton(INTERFACE_ADDR)
-      sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    frame_counter_by_size[frame_size] += 1
+    if frame_counter_by_size[frame_size] < frame_size // 100:
+        return
+    frame_counter_by_size[frame_size] = 0
 
-    # add_membership(MULTICAST_ADDR)
-    add_membership(MULTICAST_ADDR_RX)
+    # Decode the frame.
+    source = None
+    for msg_cobs in frame_cobs.split(b'\00'):
+        msg_raw = cobs.decode(msg_cobs)
+        if len(msg_raw) >= 3:
+            if crc16_func(msg_raw) != 0:
+                print(f"WARNING: message failed CRC check: {msg_raw.hex()}")
+            msg_tag = msg_raw[0]
+            if msg_tag == telem.MSG_TAG.SOURCE_ID:
+                source = msg_raw[1:-2].decode()
+                os.environ['SOURCE_ID'] = source
 
-    return sock
+    if not source:
+        print("WARNING: Got frame with no source ID. Can not send.")
+        return
 
-  udp_transport, udp_protocol = await loop.create_datagram_endpoint(
-    lambda: UdpProtocol(terminate, (MULTICAST_ADDR, SOCKET_PORT)),
-    sock=create_multicast_socket())
+    async def send_frame():
+        try:
+            if source not in connections:
+                connections[source] = None
+                connections[source] = await websockets.connect(
+                    WEBSOCKET_URI + "/" + source,
+                    ping_interval=5,
+                    ping_timeout=5,
+                    close_timeout=10,
+                )
+                print(f"Websocket connected with source \"{source}\"")
+
+            if connections[source]:
+                await connections[source].send(frame_cobs)
+        except Exception as e:
+            del connections[source]
+            print(e)
+            raise e
+    asyncio.create_task(send_frame())
 
   def on_serial_msg(msg_cobs, msg_raw):
     nonlocal sequence_micros
@@ -123,7 +148,7 @@ async def main():
         time_msg += struct.pack('>H', crc16_func(time_msg))
         frame_buffer += cobs.encode(time_msg)
         frame_buffer += b'\x00'
-        udp_protocol.send_frame(frame_buffer)
+        wss_send_frame(frame_buffer)
 
       frame_buffer.clear()
       sequence_micros = round((datetime.utcnow() - datetime.utcfromtimestamp(0)) / timedelta(microseconds=1))
@@ -140,36 +165,14 @@ async def main():
     stopbits=1)
 
   serial_protocol.on_msg = on_serial_msg
-  write_serial_frame = lambda frame: serial_protocol.send_frame(frame)
-
-  def on_udp_frame(frame_cobs):
-    # print("UDP Message Receifed")
-    # msg = f"FRAME[{len(frame_cobs)}]:"
-
-    # for msg_cobs in frame_cobs.split(b'\00'):
-    #  msg_raw = cobs.decode(msg_cobs)
-    #  if len(msg_raw) >= 3:
-    #    msg_tag = msg_raw[0]
-    #    msg += f" {msg_tag}[{len(msg_raw)}]"
-    #    if msg_tag == telem.MSG_TAG.SOURCE_ID:
-    #      source = msg_raw[1:-2].decode()
-    #      msg += f" (source={source})"
-    #    if crc16_func(msg_raw) != 0:
-    #      msg += " CRC!"
-
-    # print(msg)
-
-    # frame_cobs = cobs.encode(msg_raw) + bytes([0])
-    write_serial_frame(frame_cobs)
-
-  udp_protocol.on_frame = on_udp_frame
 
   try:
     await terminate
 
   finally:
-    udp_transport.close()
     serial_transport.close()
+    loop.stop()
+    loop.close()
 
 
 asyncio.run(main())
