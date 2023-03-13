@@ -39,6 +39,8 @@ To setup both virtual COM ports, do the following:
 
 ![image](https://user-images.githubusercontent.com/114927032/224658344-081d514a-25de-461f-916a-3b1de6ebde2b.png)
 
+This manipulation must be performed only once, i.e. this does not have to be performed at each windows startup.
+
 If your 2 created virtual COM ports are not 'COM1' and 'COM2', then the 
 variables 'USB_DEV_CMD' and 'USB_DEV_TELEM' in "config.py" must be changed accordingly. For instance,
 if the 2 created virtual COM ports are 'COM3' and 'COM7', the following lines in "config.py" must be changed as follow:
@@ -47,6 +49,7 @@ if the 2 created virtual COM ports are 'COM3' and 'COM7', the following lines in
         USB_DEV_TELEM = "COM3"
         USB_DEV_CMD = "COM7"
 ```
+### Start logging
 
 Once the COM port has been setup, run the following command to start logging the telemetry on Grafana:
 
