@@ -72,6 +72,8 @@ float DS18B20Driver::read_temperature_single()
 	int8_t digit, minus = 0;
 	float decimal = -127.f;
 
+	start_all();
+
 	_bus->reset();
 
 	_bus->write_byte(DS18B20_CMD_SKIPROM); // Skip ROM

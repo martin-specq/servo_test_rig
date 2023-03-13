@@ -74,7 +74,7 @@ public:
 		update_mag_feedback_adc_val();
 		update_supply_voltage();
 		update_supply_current();
-		//update_temperatures();
+		update_temperatures();
 		start_adc();
 	}
 
@@ -133,12 +133,9 @@ public:
 
 	void update_temperatures(void)
 	{
-		_temp_sensors->read_all_temperatures();
-		_state.nb_temp_sensors = _temp_sensors->get_device_count();
-		for(size_t i = 0; i < _state.nb_temp_sensors; i++)
-		{
-			_state.temperature_degc[i] = _temp_sensors->get_temperature(i);
-		}
+		_state.temperature_degc[0].temp = _temp_sensors->read_temperature_single();
+		_state.nb_temp_sensors = 1;
+
 	}
 
 	// Getters
