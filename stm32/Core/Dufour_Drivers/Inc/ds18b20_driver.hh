@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "ds18b20_defs.h"
-#include "one_wire_driver.hh"
 #include "main.h"
+#include "../../Dufour_Drivers/Inc/ds18b20_defs.h"
+#include "../../Dufour_Drivers/Inc/one_wire_driver.hh"
 
 typedef struct
 {

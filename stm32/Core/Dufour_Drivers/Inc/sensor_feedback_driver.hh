@@ -5,13 +5,13 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
-#define DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
+#ifndef DUFOUR_DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
+#define DUFOUR_DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_
 
-#include "hx711_driver.hh"
-#include "current_amplifier_ina180.hh"
-#include "ds18b20_driver.hh"
-#include "filter.hh"
+#include "../../../App/Inc/Filter.hh"
+#include "../../Dufour_Drivers/Inc/current_amplifier_ina180.hh"
+#include "../../Dufour_Drivers/Inc/ds18b20_driver.hh"
+#include "../../Dufour_Drivers/Inc/hx711_driver.hh"
 
 #define SEN_FB_ADC_NB_CH 4
 
@@ -164,4 +164,4 @@ public:
 	}
 };
 
-#endif /* DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_ */
+#endif /* DUFOUR_DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_ */

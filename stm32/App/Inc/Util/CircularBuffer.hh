@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include "Math.hh"
+#include "../../App/Inc/Math.hh"
 
 // Circular buffer of capacity N-1.
 template<class T, size_t N> class CircularBuffer

@@ -5,12 +5,13 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_ONE_WIRE_DRIVER_HH_
-#define DRIVERS_INC_ONE_WIRE_DRIVER_HH_
+#ifndef DUFOUR_DRIVERS_INC_ONE_WIRE_DRIVER_HH_
+#define DUFOUR_DRIVERS_INC_ONE_WIRE_DRIVER_HH_
 
 #include "main.h"
 #include <string.h>
-#include "ds18b20_defs.h"
+
+#include "../../Dufour_Drivers/Inc/ds18b20_defs.h"
 
 /** Max number of sensors allowed to be placed on the bus. */
 #define ONE_WIRE_SENSORS_MAX 							12U
@@ -107,4 +108,4 @@ public:
 
 };
 
-#endif /* DRIVERS_INC_ONE_WIRE_DRIVER_HH_ */
+#endif /* DUFOUR_DRIVERS_INC_ONE_WIRE_DRIVER_HH_ */

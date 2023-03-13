@@ -5,8 +5,8 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_SERVO_P500_DRIVER_HH_
-#define DRIVERS_INC_SERVO_P500_DRIVER_HH_
+#ifndef DUFOUR_DRIVERS_INC_SERVO_P500_DRIVER_HH_
+#define DUFOUR_DRIVERS_INC_SERVO_P500_DRIVER_HH_
 
 #include "main.h"
 
@@ -51,4 +51,4 @@ public:
   }
 };
 
-#endif /* DRIVERS_INC_SERVO_P500_DRIVER_HH_ */
+#endif /* DUFOUR_DRIVERS_INC_SERVO_P500_DRIVER_HH_ */

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DeviceInterfaces.hh"
 #include "main.h"
+#include "../../../App/Inc/DeviceInterfaces.hh"
 
 class TimerDriver : public TimeSourceInterface
 {

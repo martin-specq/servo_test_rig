@@ -5,15 +5,16 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
-#define DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
+#ifndef DUFOUR_DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
+#define DUFOUR_DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_
 
-#include "sensor_feedback_driver.hh"
-#include "servo_p500_driver.hh"
-#include "serial_interface.hh"
-#include "Telemetry.hh"
-#include "IntervalWaiter.hh"
 #include "math.h"
+
+#include "../../../App/Inc/IntervalWaiter.hh"
+#include "../../../App/Inc/Telemetry.hh"
+#include "../../Dufour_Drivers/Inc/sensor_feedback_driver.hh"
+#include "../../Dufour_Drivers/Inc/serial_interface.hh"
+#include "../../Dufour_Drivers/Inc/servo_p500_driver.hh"
 
 #define SERVO_CTRL_LOOP_FREQ_HZ 50
 #define SERVO_CTRL_LOOP_PER_US 20000
@@ -315,4 +316,4 @@ public:
 
 
 
-#endif /* DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_ */
+#endif /* DUFOUR_DRIVERS_INC_HIGH_LEVEL_CONTROLLER_HH_ */

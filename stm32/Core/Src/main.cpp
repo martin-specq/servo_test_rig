@@ -24,15 +24,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "sensor_feedback_driver.hh"
-#include "one_wire_driver.hh"
-#include "ds18b20_driver.hh"
-#include "high_level_controller.hh"
-#include "hx711_driver.hh"
-#include "servo_p500_driver.hh"
-#include "uart_driver.hh"
-#include "serial_interface.hh"
-#include "timer_driver.hh"
+#include "../Dufour_Drivers/Inc/ds18b20_driver.hh"
+#include "../Dufour_Drivers/Inc/high_level_controller.hh"
+#include "../Dufour_Drivers/Inc/hx711_driver.hh"
+#include "../Dufour_Drivers/Inc/one_wire_driver.hh"
+#include "../Dufour_Drivers/Inc/sensor_feedback_driver.hh"
+#include "../Dufour_Drivers/Inc/serial_interface.hh"
+#include "../Dufour_Drivers/Inc/servo_p500_driver.hh"
+#include "../Dufour_Drivers/Inc/timer_driver.hh"
+#include "../Dufour_Drivers/Inc/uart_driver.hh"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

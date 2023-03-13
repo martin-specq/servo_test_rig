@@ -5,13 +5,14 @@
  *      Author: martin
  */
 
-#ifndef DRIVERS_INC_SERIAL_INTERFACE_HH_
-#define DRIVERS_INC_SERIAL_INTERFACE_HH_
+#ifndef DUFOUR_DRIVERS_INC_SERIAL_INTERFACE_HH_
+#define DUFOUR_DRIVERS_INC_SERIAL_INTERFACE_HH_
 
 #include <string.h>
 
 #include "main.h"
-#include "StreamInterface.hh"
+
+#include "../../../App/Inc/StreamInterface.hh"
 
 typedef enum
 {
@@ -186,4 +187,4 @@ private:
 };
 
 
-#endif /* DRIVERS_INC_SERIAL_INTERFACE_HH_ */
+#endif /* DUFOUR_DRIVERS_INC_SERIAL_INTERFACE_HH_ */

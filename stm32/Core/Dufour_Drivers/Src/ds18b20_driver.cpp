@@ -4,7 +4,8 @@
  *
  */
 
-#include "ds18b20_driver.hh"
+#include "../../Dufour_Drivers/Inc/ds18b20_driver.hh"
+
 #include <string.h>
 #include <math.h>
 

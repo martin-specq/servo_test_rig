@@ -8,7 +8,7 @@
 #ifndef DRIVERS_SRC_ONE_WIRE_CPP_
 #define DRIVERS_SRC_ONE_WIRE_CPP_
 
-#include <one_wire_driver.hh>
+#include "../../Dufour_Drivers/Inc/one_wire_driver.hh"
 
 void OneWireDriver::gpio_set_pin_as_input()
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DeviceInterfaces.hh"
+#include "../../App/Inc/DeviceInterfaces.hh"
 
 namespace dfr
 {
