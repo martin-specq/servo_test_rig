@@ -91,7 +91,7 @@ else:
 python set_angle.py <angle_deg>
 ```
 where:
-    - <angle_deg> is the servo target angle in degrees.
+- <angle_deg> is the servo target angle in degrees.
 
 ## Sinuoidal trajectory with constant period 
 
