@@ -64,11 +64,15 @@ python start_logging.py
 
 ## Linux
 
+### Start logging
+
 Run the following command to start logging the telemetry on Grafana:
 
 ```
 python start_logging.py
 ```
+
+### Troubleshooting
 
 If an error such as "could not open port '/dev/ttyUSB0'" terminates the program, it means that 
 the UBS device name is not '/dev/ttyUSB0'. In order to find the USB device name, run the following 
