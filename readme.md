@@ -3,13 +3,13 @@ This repository contains the necessary code to operate the X2.3 servo test rig.
 # STM32 project
 The stm32 folder contains the embedded code to be flashed on the Nucleo-STM32L476RG.
 In order to flash the code, do the following:
-    1. Open the STM32CubeIDE
-    2. Click on "File" and then on "Open Project from File System..."
-        - Click on "Directory..." and select the stm32 folder
-        - Click on "Finish"
-    3. From the Project Explorer, right click on the project name and click on "Build"
-    4. From the Project Explorer, right click on the project and click on "Run As" and then on 
-       "1 STM32 C/C++ Application". A window will open. Click on "OK".
+1. Open the STM32CubeIDE
+2. Click on "File" and then on "Open Project from File System..."
+    - Click on "Directory..." and select the stm32 folder
+    - Click on "Finish"
+3. From the Project Explorer, right click on the project name and click on "Build"
+4. From the Project Explorer, right click on the project and click on "Run As" and then on 
+   "1 STM32 C/C++ Application". A window will open. Click on "OK".
        
 The flashing should start.
 
