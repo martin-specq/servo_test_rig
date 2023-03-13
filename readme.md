@@ -99,9 +99,9 @@ where:
 python start_sinus.py <angle_min_deg> <amgle_max_deg> <period_s>
 ```
 where:
-    - <angle_min_deg> is the peak minimum angle in degreea of the sinusoidal trjectory
-    - <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trjectory
-    - <period_s> is the period in seconds of the sinusoidal trajectory
+- <angle_min_deg> is the peak minimum angle in degreea of the sinusoidal trjectory
+- <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trjectory
+- <period_s> is the period in seconds of the sinusoidal trajectory
 
 ## Sinuoidal trajectory with descending period sweep
 
@@ -109,12 +109,12 @@ where:
 python start_sinus_sweep.py <angle_min_deg> <amgle_max_deg> <per_min_s> <per_max_s> <n_per> <n_cycles_per_per>
 ```
 where:
-    - <angle_min_deg> is the peak minimum angle in degreea of the sinusoidal trjectory
-    - <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trjectory
-    - <per_min_s> is the lower bound period in seconds of the period sweep
-    - <per_max_s> is the higher bound period in seconds of the period sweep
-    - <n_per> is the number of periods between <per_min_s> and <per_max_s> on a linear scale
-    - <n_cycles_per_per> is the number of cycles for each period
+- <angle_min_deg> is the peak minimum angle in degreea of the sinusoidal trjectory
+- <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trjectory
+- <per_min_s> is the lower bound period in seconds of the period sweep
+- <per_max_s> is the higher bound period in seconds of the period sweep
+- <n_per> is the number of periods between <per_min_s> and <per_max_s> on a linear scale
+- <n_cycles_per_per> is the number of cycles for each period
 
 ## Stop any sinusoidal trajectory and reset the servo position
 
