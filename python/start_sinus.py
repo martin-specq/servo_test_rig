@@ -9,7 +9,7 @@ parser.add_argument('angle_max_deg', default='30.0')
 parser.add_argument('period_s', default='2.0')
 args = parser.parse_args()
 
-ser = serial.Serial(config.USB_DEVICE, config.BAUDRATE) # open serial port
+ser = serial.Serial(config.USB_DEV_CMD, config.BAUDRATE) # open serial port
 
 str_commands.start_sinusoidal(
     ser, 

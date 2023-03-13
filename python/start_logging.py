@@ -5,7 +5,7 @@ from cobs import cobs
 import crcmod
 from datetime import datetime, timedelta
 import serial_asyncio
-import socket
+import config
 import struct
 import telemetry.telem as telem
 import websockets
@@ -69,7 +69,7 @@ class SerialProtocol(asyncio.Protocol):
 async def main():
 
   parser = argparse.ArgumentParser(description='Proxy data between LLFC serial connection and UDP.')
-  parser.add_argument('--device', default='COM1')
+  parser.add_argument('--device', default=config.USB_DEV_TELEM)
   parser.add_argument('--baudrate', default=115200)
   args = parser.parse_args()
 
