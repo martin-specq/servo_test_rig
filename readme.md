@@ -20,9 +20,24 @@ The flashing should start.
 # Telemetry logging
 
 ## Windows
-In order to make it work on Windows, a COM port splitter must be used. The instructions to setup
-the COM port splitter are located in "windows_setup/readme.txt". This must be done only once by the
-first time you use the test rig. If your 2 created virtual COM ports are not 'COM1' and 'COM2', then the 
+
+### COM port splitter setup
+
+The test rig sends telemetry over the UART-to-USB adapter COM port and also receives commands 
+from the user to command the servo via the same COM port. Since Windows does not allow several 
+applications to share a single COM port, a COM port splitter software must be to used to create 
+one virtual COM port for the telemetry and a different virtual COM port for the user commands. 
+
+To setup both virtual COM ports, do the following:
+1. Install the HDD Virtual Serial Port Tool by executing "free-virtual-serial-port-tool.exe" located in the "windows_setup" folder.
+2. Launch "Virtual Serial Port Tool"
+3. In the "Splitted Ports" window, click on "Split Ports"
+4. In the "Select existing device" window, click on the UART-to-USB adapter device name.
+5. In the "Split to" window, add "COM1" and "COM2" by using the "+" button.
+6. Click on "Create".
+![image](https://user-images.githubusercontent.com/114927032/224658344-081d514a-25de-461f-916a-3b1de6ebde2b.png)
+
+If your 2 created virtual COM ports are not 'COM1' and 'COM2', then the 
 variables 'USB_DEV_CMD' and 'USB_DEV_TELEM' in "config.py" must be changed accordingly. For instance,
 if the 2 created virtual COM ports are 'COM3' and 'COM7', the following lines in "config.py" must be changed as follow:
 ```python
