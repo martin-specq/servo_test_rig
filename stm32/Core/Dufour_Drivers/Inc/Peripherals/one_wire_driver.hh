@@ -11,7 +11,7 @@
 #include "main.h"
 #include <string.h>
 
-#include "../../Dufour_Drivers/Inc/ds18b20_defs.h"
+#include "Sensors/ds18b20_defs.h"
 
 /** Max number of sensors allowed to be placed on the bus. */
 #define ONE_WIRE_SENSORS_MAX 							12U

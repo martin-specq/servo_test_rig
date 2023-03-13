@@ -3,9 +3,9 @@
 #include "main.h"
 #include <algorithm>
 
-#include "../../../App/Inc/CircularBuffer.hh"
-#include "../../../App/Inc/Math.hh"
-#include "../../../App/Inc/StreamInterface.hh"
+#include "Util/CircularBuffer.hh"
+#include "Util/Math.hh"
+#include "Interfaces/StreamInterface.hh"
 
 class UartDriver : public StreamInterface
 {

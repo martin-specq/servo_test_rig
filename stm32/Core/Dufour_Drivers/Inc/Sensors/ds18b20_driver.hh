@@ -23,8 +23,8 @@
 #pragma once
 
 #include "main.h"
-#include "../../Dufour_Drivers/Inc/ds18b20_defs.h"
-#include "../../Dufour_Drivers/Inc/one_wire_driver.hh"
+#include "Sensors/ds18b20_defs.h"
+#include "Peripherals/one_wire_driver.hh"
 
 typedef struct
 {

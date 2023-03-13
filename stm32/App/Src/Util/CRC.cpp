@@ -14,7 +14,7 @@
  *  - Algorithm     = table-driven
  */
 
-#include "../../App/Inc/CRC.hh"
+#include "Util/CRC.hh"
 
 /**
  * Static table used for the table_driven implementation.

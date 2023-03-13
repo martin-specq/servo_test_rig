@@ -1,8 +1,8 @@
 
-#include "../../App/Inc/Telemetry.hh"
+#include "Coms/Telemetry.hh"
 
-#include "../../App/Inc/COBS.hh"
-#include "../../App/Inc/Math.hh"
+#include "Util/COBS.hh"
+#include "Util/Math.hh"
 
 namespace telem
 {

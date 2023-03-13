@@ -7,11 +7,16 @@
 namespace hlc
 {
 
+namespace wf
+{
+
+const size_t BUFFER_SIZE = 1000;
+
 typedef struct
 {
 	// Values
-	float values[SERVO_CTRL_WF_MAX_LEN] = { 0 };
-	size_t len = SERVO_CTRL_WF_MAX_LEN;
+	float values[BUFFER_SIZE] = { 0 };
+	size_t len = BUFFER_SIZE;
 	size_t head = 0;
 
 	// Parameters
@@ -30,5 +35,8 @@ typedef struct
 
 	bool enabled = false;
 } Sinusoid_t;
+
+
+} // namespace wf
 
 } // namespace hlc

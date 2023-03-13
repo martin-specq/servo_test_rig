@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../App/Inc/BufferWriter.hh"
-#include "../../App/Inc/CRC.hh"
-#include "../../App/Inc/StreamInterface.hh"
+#include "Util/BufferWriter.hh"
+#include "Util/CRC.hh"
+#include "Interfaces/StreamInterface.hh"
 
 namespace telem
 {

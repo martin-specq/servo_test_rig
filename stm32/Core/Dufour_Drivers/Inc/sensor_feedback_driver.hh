@@ -145,23 +145,7 @@ public:
 		return _state;
 	}
 
-	// ADC functions
-	uint8_t start_adc(void)
-	{
-		_adcx_conv_cplt = 0;
-		return (HAL_ADC_Start_DMA(_hadcx, (uint32_t*)_adc_buf, SEN_FB_ADC_NB_CH)
-				== HAL_OK);
-	}
 
-	ADC_TypeDef* get_adc_instance(void)
-	{
-		return _hadcx->Instance;
-	}
-
-	void on_adc_cplt_conv(void)
-	{
-		_adcx_conv_cplt = 1;
-	}
 };
 
 #endif /* DUFOUR_DRIVERS_INC_SENSOR_FEEDBACK_DRIVER_HH_ */

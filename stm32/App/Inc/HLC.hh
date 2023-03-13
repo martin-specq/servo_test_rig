@@ -2,46 +2,45 @@
 
 #include "math.h"
 
-#include "../../../App/Inc/IntervalWaiter.hh"
-#include "../../../App/Inc/Telemetry.hh"
-#include "../../Dufour_Drivers/Inc/sensor_feedback_driver.hh"
-#include "../../Dufour_Drivers/Inc/serial_interface.hh"
-#include "../../Dufour_Drivers/Inc/servo_p500_driver.hh"
+#include "Util/IntervalWaiter.hh"
+#include "Coms/Telemetry.hh"
+#include "Coms/UsrCmdParser.hh"
+#include "Config/Configuration.hh"
+#include "Interfaces/DeviceInterfaces.hh"
+#include "Interfaces/StreamInterface.hh"
 
 namespace hlc
 {
 
-#define SERVO_CTRL_LOOP_FREQ_HZ 50
-#define SERVO_CTRL_LOOP_PER_US 20000
-
 #define SERVO_CTRL_WF_MIN_PERIOD_S 0.2
 #define SERVO_CTRL_WF_MAX_PERIOD_S 20.0
-#define SERVO_CTRL_WF_MAX_LEN 1000
 
 class HLC
 {
 private:
-	const char *_source_id = "test-ser-x23";
-	TimeSourceInterface *_time_source;
-	dfr::IntervalWaiter _interval_waiter;
-	ServoP500Driver *_servo;
-	SensorFeedbackDriver *_sensors;
-	SerialInterface *_host_pc;
-	telem::SerialWriter _telem;
-	Sinusoid_t _waveform;
-	float _reference_deg;
+	const char 				*_source_id;
+	TimeSourceInterface 	*_time_source;
+	dfr::IntervalWaiter 	_interval_waiter;
+	ServoP500Driver 		*_servo;
+	SensorFeedbackDriver 	*_sensors;
+	usr_cmd::UsrCmdParser 	*_usr_cmd_parser;
+	telem::SerialWriter 	_telem;
+	wf::Sinusoid_t 			_waveform;
+	float 					_reference_deg;
 
 public:
-	HLC(TimeSourceInterface *time_source,
-									ServoP500Driver *servo,
-									SensorFeedbackDriver *sensors,
-									SerialInterface *host_pc,
-									StreamInterface *stream_telem) :
-									_interval_waiter(time_source, SERVO_CTRL_LOOP_PER_US),
-									_servo(servo),
-									_sensors(sensors),
-									_host_pc(host_pc),
-									_telem(stream_telem)
+	HLC(const char              *source_id,
+		TimeSourceInterface 	*time_source,
+		ServoP500Driver 		*servo,
+		SensorFeedbackDriver 	*sensors,
+		usr_cmd::UsrCmdParser 	*usr_cmd_parser,
+		StreamInterface 		*stream_telem) :
+		_source_id(source_id),
+		_interval_waiter(time_source, cfg::loop::period_us),
+		_servo(servo),
+		_sensors(sensors),
+		_usr_cmd_parser(usr_cmd_parser),
+		_telem(stream_telem)
 	{
 	}
 
