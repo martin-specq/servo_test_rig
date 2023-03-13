@@ -19,6 +19,11 @@ The flashing should start.
 
 # Telemetry logging
 
+The telemetry logging are locate in the "python" folder.
+```
+cd python
+```
+
 ## Windows
 
 ### COM port splitter setup
@@ -84,6 +89,12 @@ else:
 ```
 
 # Servo control
+
+The servo control scripts are located in the "python" folder.
+
+```
+cd python
+```
 
 ## Set servo angle
 
