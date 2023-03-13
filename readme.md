@@ -29,12 +29,13 @@ applications to share a single COM port, a COM port splitter software must be to
 one virtual COM port for the telemetry and a different virtual COM port for the user commands. 
 
 To setup both virtual COM ports, do the following:
-1. Install the HDD Virtual Serial Port Tool by executing "free-virtual-serial-port-tool.exe" located in the "windows_setup" folder.
+1. Install the HDD Virtual Serial Port Tool by executing "free-virtual-serial-port-tool.exe" located under "python/windows_setup".
 2. Launch "Virtual Serial Port Tool"
 3. In the "Splitted Ports" window, click on "Split Ports"
 4. In the "Select existing device" window, click on the UART-to-USB adapter device name.
 5. In the "Split to" window, add "COM1" and "COM2" by using the "+" button.
 6. Click on "Create".
+
 
 ![image](https://user-images.githubusercontent.com/114927032/224658344-081d514a-25de-461f-916a-3b1de6ebde2b.png)
 
