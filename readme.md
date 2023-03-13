@@ -93,7 +93,7 @@ python set_angle.py <angle_deg>
 where:
 - <angle_deg> is the servo target angle in degrees.
 
-## Sinuoidal trajectory with constant period 
+## Sinusoidal trajectory with constant period 
 
 ```
 python start_sinus.py <angle_min_deg> <amgle_max_deg> <period_s>
@@ -103,10 +103,10 @@ where:
 - <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trajectory
 - <period_s> is the period in seconds of the sinusoidal trajectory
 
-## Sinuoidal trajectory with descending period sweep
+## Sinusoidal trajectory with descending period sweep
 
 ```
-python start_sinus_sweep.py <angle_min_deg> <amgle_max_deg> <per_min_s> <per_max_s> <n_per> <n_cycles_per_per>
+python start_sinus_sweep.py <angle_min_deg> <angle_max_deg> <per_min_s> <per_max_s> <n_per> <n_cycles_per_per>
 ```
 where:
 - <angle_min_deg> is the peak minimum angle in degrees of the sinusoidal trajectory
