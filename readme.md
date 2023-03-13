@@ -99,8 +99,8 @@ where:
 python start_sinus.py <angle_min_deg> <amgle_max_deg> <period_s>
 ```
 where:
-- <angle_min_deg> is the peak minimum angle in degreea of the sinusoidal trjectory
-- <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trjectory
+- <angle_min_deg> is the peak minimum angle in degrees of the sinusoidal trajectory
+- <angle_max_deg> is the peak maximum angle in degrees of the sinusoidal trajectory
 - <period_s> is the period in seconds of the sinusoidal trajectory
 
 ## Sinuoidal trajectory with descending period sweep
